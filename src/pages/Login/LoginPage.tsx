@@ -15,6 +15,9 @@ export const LoginPage = () => {
         showPassword,
         togglePasswordVisibility,
         handleLogin,
+        error,
+        loading,
+        unverifiedEmail,
     } = useLogin();
 
     return (
@@ -49,13 +52,25 @@ export const LoginPage = () => {
                         }
                     />
 
+                    {error && (
+                        <div className="error-message">
+                            {error}
+                        </div>
+                    )}
+
+                    {unverifiedEmail && (
+                        <div className="verification-message">
+                            Verifica tu cuenta antes de acceder, te hemos enviado un mensaje al correo {unverifiedEmail}
+                        </div>
+                    )}
+
                     <div className="form-actions">
                         <Checkbox label="Recordarme" />
                         <a href="#" className="forgot-password">¿Olvidaste tu contraseña?</a>
                     </div>
 
-                    <Button type="submit" className="login-button">
-                        Iniciar Sesión
+                    <Button type="submit" className="login-button" disabled={loading}>
+                        {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                     </Button>
 
                     <div className="register-link">

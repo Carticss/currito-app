@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -6,6 +7,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+    const { user } = useAuth();
     return (
         <>
             <div className={`sidebar-overlay ${isOpen ? 'open' : ''}`} onClick={onClose} />
@@ -66,8 +68,8 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                             </svg>
                         </div>
                         <div className="user-info">
-                            <h4>Usuario</h4>
-                            <p>admin@sistema.com</p>
+                            <h4>{user?.username || 'Usuario'}</h4>
+                            <p>{user?.email || 'admin@sistema.com'}</p>
                         </div>
                     </div>
                 </div>
