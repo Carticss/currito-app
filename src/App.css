@@ -1,0 +1,47 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Page styles */
+.login-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Dissolve transition for page navigation */
+#dissolve-root {
+  opacity: 1;
+  transition: opacity 400ms cubic-bezier(0.4,0,0.2,1);
+}
+#dissolve-root.fade-out {
+  opacity: 0;
+}

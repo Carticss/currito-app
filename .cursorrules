@@ -1,0 +1,5 @@
+# Project Rules
+
+- Only one level of routing.
+- All logic must be inside hooks.
+- Styles for each page must be inside the page's folder (e.g., `LoginPage.css` inside `src/pages/Login/`).
