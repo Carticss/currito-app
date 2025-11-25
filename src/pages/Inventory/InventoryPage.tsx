@@ -10,7 +10,13 @@ export const InventoryPage = () => {
         loading,
         searchTerm,
         setSearchTerm,
-        formatPrice
+        categoryFilter,
+        setCategoryFilter,
+        statusFilter,
+        setStatusFilter,
+        categories,
+        formatPrice,
+        toggleProductAvailability
     } = useInventory();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,7 +25,7 @@ export const InventoryPage = () => {
     const handleProductCreated = () => {
         setIsModalOpen(false);
         setSelectedProduct(null);
-        window.location.reload(); // Simple refresh for now to see new data
+        window.location.reload();
     };
 
     const handleEditProduct = (product: Product) => {
@@ -61,11 +67,26 @@ export const InventoryPage = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <select className="filter-select">
-                    <option>Todas las categorías</option>
+                <select
+                    className="filter-select"
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                >
+                    <option value="">Todas las categorías</option>
+                    {categories.map(category => (
+                        <option key={category._id} value={category._id}>
+                            {category.name}
+                        </option>
+                    ))}
                 </select>
-                <select className="filter-select">
-                    <option>Todos los estados</option>
+                <select
+                    className="filter-select"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                    <option value="all">Todos los estados</option>
+                    <option value="available">Disponible</option>
+                    <option value="unavailable">No disponible</option>
                 </select>
             </div>
 
@@ -107,7 +128,11 @@ export const InventoryPage = () => {
                                 <td>
                                     <div className="status-container">
                                         <label className="toggle-switch">
-                                            <input type="checkbox" checked={product.available} readOnly />
+                                            <input
+                                                type="checkbox"
+                                                checked={product.available}
+                                                onChange={() => toggleProductAvailability(product._id)}
+                                            />
                                             <span className="slider"></span>
                                         </label>
                                         <span className={`status - badge ${product.available ? 'available' : 'unavailable'} `}>

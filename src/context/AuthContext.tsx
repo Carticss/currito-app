@@ -59,6 +59,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    if (isAuthenticated && !token) {
+      logout();
+    }
+  }, [isAuthenticated, token]);
+
+  useEffect(() => {
     const checkTokenRefresh = async () => {
       if (!isAuthenticated || !token || !lastLogin) return;
 
@@ -78,6 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.log('Token refreshed successfully');
         } catch (error) {
           console.error('Failed to refresh token:', error);
+          logout();
         }
       }
     };

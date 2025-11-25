@@ -20,6 +20,11 @@ export const InventoryRepository = {
         return response.data.products;
     },
 
+    getProductById: async (id: string): Promise<Product> => {
+        const response = await axiosInstance.get<{ product: Product }>(`/api/v1/products/${id}`);
+        return response.data.product;
+    },
+
     createProduct: async (data: CreateProductRequest): Promise<Product> => {
         const response = await axiosInstance.post<{ product: Product }>('/api/v1/products', data);
         return response.data.product;
