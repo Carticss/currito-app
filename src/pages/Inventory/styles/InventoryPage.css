@@ -212,11 +212,11 @@
     border-radius: 50%;
 }
 
-input:checked + .slider {
+input:checked+.slider {
     background-color: #10b981;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
     transform: translateX(16px);
 }
 
@@ -277,4 +277,98 @@ input:checked + .slider:before {
 .action-btn:hover {
     border-color: #d1d5db;
     color: #374151;
+}
+
+/* Tags Bubble */
+.tags-bubble {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: 50;
+    min-width: 200px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    animation: bubbleFadeIn 0.2s ease-out;
+}
+
+@keyframes bubbleFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile Responsiveness */
+.mobile-only {
+    display: none;
+}
+
+.mobile-details-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0 10px;
+}
+
+@media (max-width: 768px) {
+    .inventory-container {
+        padding: 1rem;
+    }
+
+    .inventory-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-container {
+        flex: auto;
+    }
+
+    .desktop-only {
+        display: none;
+    }
+
+    .mobile-only {
+        display: table-cell;
+    }
+
+    .products-table th,
+    .products-table td {
+        padding: 0.75rem 1rem;
+    }
+
+    .product-cell {
+        max-width: 200px;
+        /* Prevent name from stretching too wide */
+    }
+
+    .product-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 }

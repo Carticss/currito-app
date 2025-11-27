@@ -1,7 +1,9 @@
+import { useState, useRef, useEffect } from 'react';
 import { CreateProductModal } from './components/CreateProductModal/CreateProductModal';
 import { CustomSelect } from '../../components/CustomSelect/CustomSelect';
 import { useInventory } from './hooks/useInventory';
 import './styles/InventoryPage.css';
+import { InventoryDetailsModal } from './components/InventoryDetailsModal/InventoryDetailsModal';
 
 export const InventoryPage = () => {
     const {
@@ -25,6 +27,30 @@ export const InventoryPage = () => {
         handleEditProduct,
         handleCloseModal
     } = useInventory();
+
+    const [mobileDetailsProductId, setMobileDetailsProductId] = useState<string | null>(null);
+    const [expandedTagsProductId, setExpandedTagsProductId] = useState<string | null>(null);
+    const tagsBubbleRef = useRef<HTMLDivElement>(null);
+
+    const mobileDetailsProduct = mobileDetailsProductId
+        ? products.find(p => p._id === mobileDetailsProductId)
+        : null;
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (tagsBubbleRef.current && !tagsBubbleRef.current.contains(event.target as Node)) {
+                setExpandedTagsProductId(null);
+            }
+        };
+
+        if (expandedTagsProductId) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [expandedTagsProductId]);
 
     if (loading) {
         return <div className="inventory-container">Cargando inventario...</div>;
@@ -85,13 +111,14 @@ export const InventoryPage = () => {
                     <thead>
                         <tr>
                             <th>PRODUCTO</th>
-                            <th>PRECIO $</th>
-                            <th>SKU</th>
-                            <th>CATEGORÍA</th>
-                            <th>MARCA</th>
-                            <th>ETIQUETAS</th>
-                            <th>ESTADO</th>
-                            <th>ACCIONES</th>
+                            <th className="desktop-only">PRECIO $</th>
+                            <th className="desktop-only">SKU</th>
+                            <th className="desktop-only">CATEGORÍA</th>
+                            <th className="desktop-only">MARCA</th>
+                            <th className="desktop-only">ETIQUETAS</th>
+                            <th className="desktop-only">ESTADO</th>
+                            <th className="desktop-only">ACCIONES</th>
+                            <th className="mobile-only"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -103,19 +130,33 @@ export const InventoryPage = () => {
                                         <span className="product-name">{product.name}</span>
                                     </div>
                                 </td>
-                                <td>{formatPrice(product.priceInCents)}</td>
-                                <td>{product.sku}</td>
-                                <td>{product.categoryId?.name || 'Sin categoría'}</td>
-                                <td>{product.brandId?.name || 'Sin marca'}</td>
-                                <td>
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <td className="desktop-only">{formatPrice(product.priceInCents)}</td>
+                                <td className="desktop-only">{product.sku}</td>
+                                <td className="desktop-only">{product.categoryId?.name || 'Sin categoría'}</td>
+                                <td className="desktop-only">{product.brandId?.name || 'Sin marca'}</td>
+                                <td className="desktop-only" style={{ position: 'relative' }}>
+                                    <div
+                                        style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setExpandedTagsProductId(product._id);
+                                        }}
+                                    >
                                         {product.tags.filter(tag => tag !== null).slice(0, 1).map(tag => (
                                             <span key={tag._id} className="tag-badge">{tag.name}</span>
                                         ))}
                                         {product.tags.filter(tag => tag !== null).length > 1 && <span className="tag-more">...</span>}
                                     </div>
+
+                                    {expandedTagsProductId === product._id && (
+                                        <div className="tags-bubble" ref={tagsBubbleRef}>
+                                            {product.tags.filter(tag => tag !== null).map(tag => (
+                                                <span key={tag._id} className="tag-badge">{tag.name}</span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </td>
-                                <td>
+                                <td className="desktop-only">
                                     <div className="status-container">
                                         <label className={`toggle-switch ${loadingProductId === product._id ? 'loading' : ''}`}>
                                             <input
@@ -126,13 +167,21 @@ export const InventoryPage = () => {
                                             />
                                             <span className="slider"></span>
                                         </label>
-                                        <span className={`status - badge ${product.available ? 'available' : 'unavailable'} `}>
+                                        <span className={`status-badge ${product.available ? 'available' : 'unavailable'}`}>
                                             {product.available ? 'Disponible' : 'No disponible'}
                                         </span>
                                     </div>
                                 </td>
-                                <td>
+                                <td className="desktop-only">
                                     <button className="action-btn" onClick={() => handleEditProduct(product)}>Editar</button>
+                                </td>
+                                <td className="mobile-only">
+                                    <button
+                                        className="mobile-details-btn"
+                                        onClick={() => setMobileDetailsProductId(product._id)}
+                                    >
+                                        ›
+                                    </button>
                                 </td>
                             </tr>
                         ))}
@@ -146,6 +195,20 @@ export const InventoryPage = () => {
                 onProductCreated={handleProductCreated}
                 productToEdit={selectedProduct}
             />
+
+            {mobileDetailsProduct && (
+                <InventoryDetailsModal
+                    product={mobileDetailsProduct}
+                    onClose={() => setMobileDetailsProductId(null)}
+                    formatPrice={formatPrice}
+                    onToggleAvailability={toggleProductAvailability}
+                    onEdit={(p) => {
+                        setMobileDetailsProductId(null);
+                        handleEditProduct(p);
+                    }}
+                    loadingProductId={loadingProductId}
+                />
+            )}
         </div>
     );
 };
