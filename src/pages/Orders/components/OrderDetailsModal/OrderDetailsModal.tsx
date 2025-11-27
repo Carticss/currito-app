@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { formatCurrency, getStatusLabel } from '../../../../utils/formatting';
 import type { Order } from '../../types/types';
-
+import { ExtraItemModal } from '../ExtraItemModal/ExtraItemModal';
+import { useOrderDetails } from '../../hooks/useOrderDetails';
+import './OrderDetailsModal.css';
 
 interface OrderDetailsModalProps {
     order: Order;
@@ -9,25 +11,30 @@ interface OrderDetailsModalProps {
 }
 
 export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose }) => {
-    const [activeTab, setActiveTab] = useState<'details' | 'chat'>('details');
-    const [tabIndicatorStyle, setTabIndicatorStyle] = useState({});
-    const tabsRef = useRef<HTMLDivElement>(null);
+    const {
+        activeTab,
+        setActiveTab,
+        tabIndicatorStyle,
+        tabsRef,
+        pendingActions,
+        isExecuting,
+        isExtraItemModalOpen,
+        setIsExtraItemModalOpen,
+        modalMode,
+        modalInitialItem,
+        handleOpenAddModal,
+        handleOpenExchangeModal,
+        handleOpenEditQuantityModal,
+        handleModalConfirm,
+        handleDeleteItem,
+        handleConfirmOrder,
+        getPendingStatus,
+        getExistingProductIds
+    } = useOrderDetails(order, onClose);
 
     const date = new Date(order.createdAt).toLocaleDateString('es-ES', {
         day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
-
-    useEffect(() => {
-        if (tabsRef.current) {
-            const activeBtn = tabsRef.current.querySelector(`.tab-btn.${activeTab}`) as HTMLElement;
-            if (activeBtn) {
-                setTabIndicatorStyle({
-                    left: activeBtn.offsetLeft,
-                    width: activeBtn.offsetWidth
-                });
-            }
-        }
-    }, [activeTab]);
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -82,21 +89,99 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
                                 <div className="products-section">
                                     <h3 className="section-title">Productos del Pedido</h3>
                                     <div className="products-list">
-                                        {order.orderItems.map((item) => (
-                                            <div key={item._id} className="product-item-row">
-                                                <div className="product-info">
-                                                    <div className="product-icon">
-                                                        {item.productId.name.charAt(0).toUpperCase()}
+                                        {order.orderItems.map((item) => {
+                                            const pendingStatus = getPendingStatus(item._id);
+                                            // Disable only if THIS item has pending status
+                                            const isDisabled = !!pendingStatus;
+
+                                            return (
+                                                <div key={item._id} className={`product-item-row ${pendingStatus || ''}`}>
+                                                    <div className="product-info">
+                                                        <div className="product-icon">
+                                                            {item.productId.photoUrl ? (
+                                                                <img src={item.productId.photoUrl} alt={item.productId.name} />
+                                                            ) : (
+                                                                item.productId.name.charAt(0).toUpperCase()
+                                                            )}
+                                                        </div>
+                                                        <div className="product-details-col">
+                                                            <span className="product-name">{item.productId.name}</span>
+                                                            <span className="product-qty">Cant: {item.quantity}</span>
+                                                            <span className="product-price">
+                                                                {formatCurrency(item.productId.priceInCents)} × {item.quantity} = {formatCurrency(item.productId.priceInCents * item.quantity)}
+                                                            </span>
+                                                            {pendingStatus === 'pending-delete' && <span className="pending-badge delete">Eliminar pendiente</span>}
+                                                            {pendingStatus === 'pending-update' && <span className="pending-badge update">Actualización pendiente</span>}
+                                                        </div>
                                                     </div>
-                                                    <span className="product-name">{item.productId.name}</span>
+                                                    <div className="product-actions">
+                                                        <button
+                                                            className="action-btn secondary small"
+                                                            onClick={() => handleOpenEditQuantityModal(item)}
+                                                            disabled={isDisabled}
+                                                        >
+                                                            Editar Cantidad
+                                                        </button>
+                                                        <button
+                                                            className="action-btn secondary small"
+                                                            onClick={() => handleOpenExchangeModal(item._id)}
+                                                            disabled={isDisabled}
+                                                        >
+                                                            Ofrecer Intercambio ⇄
+                                                        </button>
+                                                        <button
+                                                            className="action-btn danger small"
+                                                            onClick={() => handleDeleteItem(item._id)}
+                                                            disabled={isDisabled}
+                                                        >
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <button className="action-btn secondary small">
-                                                    Ofrecer Intercambio ⇄
-                                                </button>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
+                                        {/* Render Pending Adds */}
+                                        {pendingActions.filter(a => a.type === 'add').map((action, idx) => {
+                                            const isReplacement = !!action.data.replacedItemId;
+                                            // Find the name of the item being replaced if possible, or just show generic text
+                                            // Ideally we'd look up the original item name from order.orderItems using replacedItemId
+                                            const replacedItem = action.data.replacedItemId
+                                                ? order.orderItems.find(i => i._id === action.data.replacedItemId)
+                                                : null;
+
+                                            return (
+                                                <div key={`pending-add-${idx}`} className="product-item-row pending-add">
+                                                    <div className="product-info">
+                                                        <div className="product-icon new">+</div>
+                                                        <div className="product-details-col">
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                {isReplacement && <span style={{ fontSize: '16px', color: '#666' }}>↳</span>}
+                                                                <span className="product-name">{action.data.productName || 'Nuevo Producto'}</span>
+                                                            </div>
+                                                            <span className="product-qty">Cant: {action.data.quantity}</span>
+                                                            {action.data.priceInCents && (
+                                                                <span className="product-price">
+                                                                    {formatCurrency(action.data.priceInCents)} × {action.data.quantity} = {formatCurrency(action.data.priceInCents * action.data.quantity)}
+                                                                </span>
+                                                            )}
+                                                            <span className="pending-badge add">
+                                                                {isReplacement ? 'Intercambio pendiente' : 'Agregar pendiente'}
+                                                            </span>
+                                                            {isReplacement && replacedItem && (
+                                                                <span style={{ fontSize: '11px', color: '#888' }}>
+                                                                    Reemplaza a: {replacedItem.productId.name}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                    <button className="offer-product-btn">
+                                    <button
+                                        className="offer-product-btn"
+                                        onClick={handleOpenAddModal}
+                                    >
                                         Ofrecer otro producto +
                                     </button>
                                 </div>
@@ -130,9 +215,24 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
 
                 <div className="modal-footer">
                     <button className="action-btn outline">Marcar como entregado</button>
-                    <button className="action-btn primary">Confirmar Oferta/Orden</button>
+                    <button
+                        className="action-btn primary"
+                        onClick={handleConfirmOrder}
+                        disabled={isExecuting || pendingActions.length === 0}
+                    >
+                        {isExecuting ? 'Procesando...' : 'Confirmar Oferta/Orden'}
+                    </button>
                 </div>
             </div>
+
+            <ExtraItemModal
+                isOpen={isExtraItemModalOpen}
+                onClose={() => setIsExtraItemModalOpen(false)}
+                onConfirm={handleModalConfirm}
+                mode={modalMode}
+                initialItem={modalInitialItem}
+                existingProductIds={getExistingProductIds()}
+            />
         </div>
     );
 };
