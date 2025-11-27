@@ -65,7 +65,7 @@
 /* Grid Layout */
 .orders-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
 }
 
@@ -630,4 +630,82 @@
     background-color: #e7f1ff;
     color: #007bff;
     font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .orders-page {
+        padding: 1rem;
+    }
+
+    .orders-filter {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .search-bar {
+        flex: auto;
+        width: 100%;
+    }
+
+    .filter-select-custom {
+        width: 100%;
+    }
+
+    .orders-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .order-card {
+        padding: 15px;
+    }
+
+    .card-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .card-header>div:last-child {
+        text-align: left !important;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .order-amount {
+        margin-top: 0;
+    }
+
+    /* Fix Calendar Positioning on Mobile */
+    .calendar-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 320px;
+        z-index: 2000;
+        /* Ensure it's above other elements */
+    }
+
+    /* Fix Modal Buttons on Mobile */
+    .product-item-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .product-actions {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .product-actions .action-btn {
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+    }
 }

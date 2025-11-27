@@ -158,3 +158,23 @@
     min-height: 110px;
     resize: none;
 }
+
+@media (max-width: 768px) {
+    .settings-container {
+        padding: 20px;
+    }
+
+    .settings-contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-identity {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .settings-logo {
+        margin-bottom: 20px;
+    }
+}
