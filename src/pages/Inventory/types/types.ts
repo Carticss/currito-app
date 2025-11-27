@@ -36,9 +36,9 @@ export interface Product {
     priceInCents: number;
     photoUrl: string;
     available: boolean;
-    categoryId: Category;
-    brandId: Brand;
-    tags: Tag[];
+    categoryId: Category | null;
+    brandId: Brand | null;
+    tags: (Tag | null)[];
     createdAt: string;
     updatedAt: string;
     __v: number;
@@ -50,8 +50,8 @@ export interface CreateProductRequest {
     sku?: string;
     priceInCents: number;
     available: boolean;
-    categoryId: string;
-    brandId: string;
+    categoryId: string | null;
+    brandId: string | null;
     tagIds: string[];
     photoUrl?: string;
 }

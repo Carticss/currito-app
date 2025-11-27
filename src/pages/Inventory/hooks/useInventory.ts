@@ -9,6 +9,25 @@ export const useInventory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<string>('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
+
+    const handleProductCreated = () => {
+        setIsModalOpen(false);
+        setSelectedProduct(null);
+        window.location.reload();
+    };
+
+    const handleEditProduct = (product: Product) => {
+        setSelectedProduct(product);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedProduct(null);
+    };
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -48,6 +67,7 @@ export const useInventory = () => {
 
     const toggleProductAvailability = async (productId: string) => {
         try {
+            setLoadingProductId(productId);
             const product = products.find(p => p._id === productId);
             if (!product) return;
 
@@ -57,9 +77,9 @@ export const useInventory = () => {
                 sku: product.sku,
                 priceInCents: product.priceInCents,
                 available: !product.available,
-                categoryId: product.categoryId._id,
-                brandId: product.brandId._id,
-                tagIds: product.tags.map(tag => tag._id),
+                categoryId: product.categoryId?._id || null,
+                brandId: product.brandId?._id || null,
+                tagIds: product.tags?.filter(tag => tag !== null).map(tag => tag._id) || [],
                 photoUrl: product.photoUrl
             };
 
@@ -67,13 +87,15 @@ export const useInventory = () => {
             await refreshProduct(productId);
         } catch (error) {
             console.error('Error toggling product availability:', error);
+        } finally {
+            setLoadingProductId(null);
         }
     };
 
     const categories = useMemo(() => {
         const uniqueCategories = new Map<string, Category>();
         products.forEach(product => {
-            if (!uniqueCategories.has(product.categoryId._id)) {
+            if (product.categoryId && !uniqueCategories.has(product.categoryId._id)) {
                 uniqueCategories.set(product.categoryId._id, product.categoryId);
             }
         });
@@ -87,7 +109,7 @@ export const useInventory = () => {
                 product.sku.toLowerCase().includes(searchTerm.toLowerCase());
 
             // Category filter
-            const matchesCategory = !categoryFilter || product.categoryId._id === categoryFilter;
+            const matchesCategory = !categoryFilter || (product.categoryId && product.categoryId._id === categoryFilter);
 
             // Status filter
             const matchesStatus = statusFilter === 'all' ||
@@ -111,6 +133,14 @@ export const useInventory = () => {
         categories,
         formatPrice,
         refreshProduct,
-        toggleProductAvailability
+        toggleProductAvailability,
+        loadingProductId,
+        isModalOpen,
+        setIsModalOpen,
+        selectedProduct,
+        setSelectedProduct,
+        handleProductCreated,
+        handleEditProduct,
+        handleCloseModal
     };
 };

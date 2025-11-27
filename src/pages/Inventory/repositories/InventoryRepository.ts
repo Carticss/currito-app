@@ -1,3 +1,4 @@
+import axiosInstance from '../../../api/axiosInstance';
 import type {
     Product,
     CreateProductRequest,
@@ -12,7 +13,6 @@ import type {
     CreateTagRequest,
     TagResponse
 } from '../types/types';
-import axiosInstance from '../../../api/axiosInstance';
 
 export const InventoryRepository = {
     getProducts: async (): Promise<Product[]> => {

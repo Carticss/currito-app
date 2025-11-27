@@ -57,11 +57,17 @@
     padding: 1rem;
     border-radius: 8px;
     border: 1px solid #e5e7eb;
+    align-items: center;
 }
 
 .search-container {
-    flex: 1;
+    flex: 0 0 60%;
     position: relative;
+}
+
+.filter-select-custom {
+    flex: 1;
+    min-width: 0;
 }
 
 .search-icon {
@@ -212,6 +218,20 @@ input:checked + .slider {
 
 input:checked + .slider:before {
     transform: translateX(16px);
+}
+
+/* Loading state */
+.toggle-switch.loading .slider {
+    background-color: #9ca3af !important;
+    pointer-events: none;
+}
+
+.toggle-switch.loading .slider:before {
+    transform: translateX(8px) !important;
+}
+
+.toggle-switch.loading input {
+    pointer-events: none;
 }
 
 .status-container {

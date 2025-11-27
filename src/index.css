@@ -20,3 +20,87 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+
+/* Global Custom Select Styles */
+.custom-select-container {
+    position: relative;
+    min-width: 150px;
+    font-size: 14px;
+}
+
+.custom-select-trigger {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    height: 42px; /* Fixed height to match inputs */
+    box-sizing: border-box;
+}
+
+.custom-select-trigger .arrow {
+    font-size: 10px;
+    margin-left: 10px;
+    transition: transform 0.2s;
+}
+
+.custom-select-trigger .arrow.open {
+    transform: rotate(180deg);
+}
+
+.custom-select-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin-top: 4px;
+    z-index: 1001;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.custom-select-option {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+.custom-select-option:hover {
+    background-color: #f8f9fa;
+}
+
+.custom-select-option.selected {
+    background-color: #e7f1ff;
+    color: #007bff;
+    font-weight: 500;
+}
+
+/* Global Input Styles to match Custom Select */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+textarea,
+.form-input,
+.search-input {
+    padding: 10px 35px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    height: 42px; /* Fixed height to match Custom Select */
+    box-sizing: border-box;
+}
+
+textarea {
+    height: auto;
+    min-height: 100px;
+}

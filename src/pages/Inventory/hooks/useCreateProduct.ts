@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { InventoryRepository } from '../repositories/InventoryRepository';
 import type { Category, Brand, Tag, CreateProductRequest, Product, UpdateProductRequest } from '../types/types';
 
@@ -30,6 +30,11 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
 
     const [createdProductId, setCreatedProductId] = useState<string | null>(null);
 
+    // Image cropper state
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isCropperOpen, setIsCropperOpen] = useState(false);
+    const [tempImageSrc, setTempImageSrc] = useState<string | null>(null);
+
     useEffect(() => {
         if (productToEdit) {
             setName(productToEdit.name);
@@ -37,9 +42,9 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
             setSku(productToEdit.sku || '');
             setPrice((productToEdit.priceInCents / 100).toString());
             setAvailable(productToEdit.available);
-            setCategoryId(productToEdit.categoryId._id);
-            setBrandId(productToEdit.brandId._id);
-            setSelectedTagIds(productToEdit.tags.map(t => t._id));
+            setCategoryId(productToEdit.categoryId?._id || '');
+            setBrandId(productToEdit.brandId?._id || '');
+            setSelectedTagIds(productToEdit.tags.filter(t => t !== null).map(t => t._id));
             setImagePreview(productToEdit.photoUrl || null);
             setCreatedProductId(null);
         } else {
@@ -138,6 +143,37 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
         reader.readAsDataURL(file);
     };
 
+    const handleFileClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setTempImageSrc(reader.result as string);
+                setIsCropperOpen(true);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCropComplete = (croppedImage: File) => {
+        handleImageChange(croppedImage);
+        setIsCropperOpen(false);
+        setTempImageSrc(null);
+    };
+
+    const handleCropperClose = () => {
+        setIsCropperOpen(false);
+        setTempImageSrc(null);
+        // Reset file input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -211,6 +247,11 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
             isCreatingCategory, setIsCreatingCategory,
             isCreatingBrand, setIsCreatingBrand
         },
+        cropperState: {
+            fileInputRef,
+            isCropperOpen,
+            tempImageSrc
+        },
         auxData: {
             categories,
             brands,
@@ -223,7 +264,11 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
             handleAddTag,
             handleCreateTagSubmit,
             removeTag,
-            handleSubmit
+            handleSubmit,
+            handleFileClick,
+            handleFileChange,
+            handleCropComplete,
+            handleCropperClose
         },
         uiState: {
             isLoading,

@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { CreateProductModal } from './components/CreateProductModal/CreateProductModal';
+import { CustomSelect } from '../../components/CustomSelect/CustomSelect';
 import { useInventory } from './hooks/useInventory';
-import { CreateProductModal } from './components/CreateProductModal';
-import type { Product } from './types/types';
-import './InventoryPage.css';
+import './styles/InventoryPage.css';
 
 export const InventoryPage = () => {
     const {
@@ -16,31 +15,34 @@ export const InventoryPage = () => {
         setStatusFilter,
         categories,
         formatPrice,
-        toggleProductAvailability
+        toggleProductAvailability,
+        loadingProductId,
+        isModalOpen,
+        setIsModalOpen,
+        selectedProduct,
+        setSelectedProduct,
+        handleProductCreated,
+        handleEditProduct,
+        handleCloseModal
     } = useInventory();
-
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
-    const handleProductCreated = () => {
-        setIsModalOpen(false);
-        setSelectedProduct(null);
-        window.location.reload();
-    };
-
-    const handleEditProduct = (product: Product) => {
-        setSelectedProduct(product);
-        setIsModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setSelectedProduct(null);
-    };
 
     if (loading) {
         return <div className="inventory-container">Cargando inventario...</div>;
     }
+
+    const categoryOptions = [
+        { value: "", label: "Todas las categorías" },
+        ...categories.map(category => ({
+            value: category._id,
+            label: category.name
+        }))
+    ];
+
+    const statusOptions = [
+        { value: "all", label: "Todos los estados" },
+        { value: "available", label: "Disponible" },
+        { value: "unavailable", label: "No disponible" }
+    ];
 
     return (
         <div className="inventory-container">
@@ -54,10 +56,7 @@ export const InventoryPage = () => {
             <div className="filters-bar">
                 <div className="search-container">
                     <span className="search-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
+                        <img src="search-icon.svg" alt="Search" />
                     </span>
                     <input
                         type="text"
@@ -67,27 +66,18 @@ export const InventoryPage = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <select
-                    className="filter-select"
+                <CustomSelect
                     value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                >
-                    <option value="">Todas las categorías</option>
-                    {categories.map(category => (
-                        <option key={category._id} value={category._id}>
-                            {category.name}
-                        </option>
-                    ))}
-                </select>
-                <select
-                    className="filter-select"
+                    onChange={setCategoryFilter}
+                    options={categoryOptions}
+                    className="filter-select-custom"
+                />
+                <CustomSelect
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                    <option value="all">Todos los estados</option>
-                    <option value="available">Disponible</option>
-                    <option value="unavailable">No disponible</option>
-                </select>
+                    onChange={setStatusFilter}
+                    options={statusOptions}
+                    className="filter-select-custom"
+                />
             </div>
 
             <div className="products-table-container">
@@ -115,23 +105,24 @@ export const InventoryPage = () => {
                                 </td>
                                 <td>{formatPrice(product.priceInCents)}</td>
                                 <td>{product.sku}</td>
-                                <td>{product.categoryId.name}</td>
-                                <td>{product.brandId.name}</td>
+                                <td>{product.categoryId?.name || 'Sin categoría'}</td>
+                                <td>{product.brandId?.name || 'Sin marca'}</td>
                                 <td>
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                                        {product.tags.slice(0, 1).map(tag => (
+                                        {product.tags.filter(tag => tag !== null).slice(0, 1).map(tag => (
                                             <span key={tag._id} className="tag-badge">{tag.name}</span>
                                         ))}
-                                        {product.tags.length > 1 && <span className="tag-more">...</span>}
+                                        {product.tags.filter(tag => tag !== null).length > 1 && <span className="tag-more">...</span>}
                                     </div>
                                 </td>
                                 <td>
                                     <div className="status-container">
-                                        <label className="toggle-switch">
+                                        <label className={`toggle-switch ${loadingProductId === product._id ? 'loading' : ''}`}>
                                             <input
                                                 type="checkbox"
                                                 checked={product.available}
                                                 onChange={() => toggleProductAvailability(product._id)}
+                                                disabled={loadingProductId === product._id}
                                             />
                                             <span className="slider"></span>
                                         </label>

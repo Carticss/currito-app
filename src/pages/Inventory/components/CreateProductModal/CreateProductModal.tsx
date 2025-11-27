@@ -1,7 +1,9 @@
-import React, { useRef } from 'react';
-import { useCreateProduct } from '../hooks/useCreateProduct';
-import type { Product } from '../types/types';
-import './CreateProductModal.css';
+import React from 'react';
+import '../../styles/CreateProductModal.css';
+import type { Product } from '../../types/types';
+import { useCreateProduct } from '../../hooks/useCreateProduct';
+import { CustomSelect } from '../../../../components/CustomSelect/CustomSelect';
+import { ImageCropperModal } from '../ImageCropperModal/ImageCropperModal';
 
 interface CreateProductModalProps {
     isOpen: boolean;
@@ -11,24 +13,24 @@ interface CreateProductModalProps {
 }
 
 export const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, onClose, onProductCreated, productToEdit }) => {
-    const { formState, auxData, actions, uiState } = useCreateProduct(() => {
+    const { formState, cropperState, auxData, actions, uiState } = useCreateProduct(() => {
         onProductCreated();
         onClose();
     }, productToEdit);
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
     if (!isOpen) return null;
 
-    const handleFileClick = () => {
-        fileInputRef.current?.click();
-    };
+    const categoryOptions = [
+        { value: "", label: "Seleccionar categoría" },
+        ...auxData.categories.map(cat => ({ value: cat._id, label: cat.name }))
+    ];
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            formState.handleImageChange(e.target.files[0]);
-        }
-    };
+    const brandOptions = [
+        { value: "", label: "Seleccionar marca" },
+        ...auxData.brands.map(brand => ({ value: brand._id, label: brand.name }))
+    ];
+
+    const tagOptions = auxData.tags.map(tag => ({ value: tag._id, label: tag.name }));
 
     return (
         <div className="modal-overlay">
@@ -56,13 +58,13 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, 
                                     <span className="image-placeholder">IMG</span>
                                 )}
                             </div>
-                            <button type="button" className="upload-btn" onClick={handleFileClick}>
+                            <button type="button" className="upload-btn" onClick={actions.handleFileClick}>
                                 Subir nueva imagen
                             </button>
                             <input
                                 type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileChange}
+                                ref={cropperState.fileInputRef}
+                                onChange={actions.handleFileChange}
                                 style={{ display: 'none' }}
                                 accept="image/*"
                             />
@@ -93,16 +95,13 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, 
 
                     <div className="form-group">
                         <label>Categoría</label>
-                        <select
-                            className="form-select"
+                        <CustomSelect
                             value={formState.categoryId}
-                            onChange={(e) => formState.setCategoryId(e.target.value)}
-                        >
-                            <option value="">Seleccionar categoría</option>
-                            {auxData.categories.map(cat => (
-                                <option key={cat._id} value={cat._id}>{cat.name}</option>
-                            ))}
-                        </select>
+                            onChange={formState.setCategoryId}
+                            options={categoryOptions}
+                            className="form-select-custom"
+                            placeholder="Seleccionar categoría"
+                        />
                         {!formState.isCreatingCategory ? (
                             <button type="button" className="inline-create-btn" onClick={() => formState.setIsCreatingCategory(true)}>
                                 + Crear categoría
@@ -126,16 +125,13 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, 
 
                     <div className="form-group">
                         <label>Marca / Proveedor</label>
-                        <select
-                            className="form-select"
+                        <CustomSelect
                             value={formState.brandId}
-                            onChange={(e) => formState.setBrandId(e.target.value)}
-                        >
-                            <option value="">Seleccionar marca</option>
-                            {auxData.brands.map(brand => (
-                                <option key={brand._id} value={brand._id}>{brand.name}</option>
-                            ))}
-                        </select>
+                            onChange={formState.setBrandId}
+                            options={brandOptions}
+                            className="form-select-custom"
+                            placeholder="Seleccionar marca"
+                        />
                         {!formState.isCreatingBrand ? (
                             <button type="button" className="inline-create-btn" onClick={() => formState.setIsCreatingBrand(true)}>
                                 + Crear marca
@@ -210,18 +206,13 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, 
                             })}
                         </div>
                         <div className="tags-input-container">
-                            <select
-                                className="form-select"
-                                onChange={(e) => {
-                                    actions.handleAddTag(e.target.value);
-                                    e.target.value = "";
-                                }}
-                            >
-                                <option value="">Seleccionar etiqueta...</option>
-                                {auxData.tags.map(tag => (
-                                    <option key={tag._id} value={tag._id}>{tag.name}</option>
-                                ))}
-                            </select>
+                            <CustomSelect
+                                value=""
+                                onChange={actions.handleAddTag}
+                                options={tagOptions}
+                                className="form-select-custom"
+                                placeholder="Seleccionar etiqueta..."
+                            />
                         </div>
                         <div className="tags-input-container" style={{ marginTop: '0.5rem' }}>
                             <input
@@ -248,6 +239,15 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, 
                     </button>
                 </div>
             </div>
+
+            {cropperState.tempImageSrc && (
+                <ImageCropperModal
+                    isOpen={cropperState.isCropperOpen}
+                    imageSrc={cropperState.tempImageSrc}
+                    onCropComplete={actions.handleCropComplete}
+                    onClose={actions.handleCropperClose}
+                />
+            )}
         </div>
     );
 };
