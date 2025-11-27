@@ -77,21 +77,6 @@ export const LoginPage = () => {
                         ¿No tienes una cuenta? <a href="#">Regístrate</a>
                     </div>
                 </form>
-
-                <div className="divider">
-                    <span>O continúa con</span>
-                </div>
-
-                <div className="social-login">
-                    <Button className="social-button">
-                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="20" height="20" />
-                        Google
-                    </Button>
-                    <Button className="social-button">
-                        <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" alt="Facebook" width="20" height="20" />
-                        Facebook
-                    </Button>
-                </div>
             </div>
         </div>
     );
