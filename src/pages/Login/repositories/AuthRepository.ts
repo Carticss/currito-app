@@ -13,7 +13,7 @@ export const AuthRepository = {
     refreshToken: async (token: string): Promise<RefreshTokenResponse> => {
         const response = await axiosInstance.post<RefreshTokenResponse>(
             '/api/v1/users/refresh-token',
-            {}, // Empty body as per curl request
+            {},
             {
                 headers: {
                     Authorization: `Bearer ${token}`,

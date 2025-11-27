@@ -2,9 +2,18 @@ import React from 'react';
 import './styles/SettingsPage.css';
 import { HiLocationMarker, HiPhone, HiMail, HiGlobe, HiLink } from 'react-icons/hi';
 import { useOrganization } from './hooks/useSettings';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export const SettingsPage: React.FC = () => {
     const { organization, loading } = useOrganization();
+    const { logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     if (loading || !organization) {
         return <div className="settings-loading">Cargando configuración...</div>;
@@ -94,6 +103,12 @@ export const SettingsPage: React.FC = () => {
 
                 <button className="settings-add-btn" disabled>
                     + Agregar enlace social
+                </button>
+            </div>
+
+            <div className="settings-logout-section">
+                <button className="settings-logout-btn" onClick={handleLogout}>
+                    Cerrar Sesión
                 </button>
             </div>
         </div>

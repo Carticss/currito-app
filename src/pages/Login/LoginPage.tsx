@@ -14,6 +14,8 @@ export const LoginPage = () => {
         setPassword,
         showPassword,
         togglePasswordVisibility,
+        rememberMe,
+        setRememberMe,
         handleLogin,
         error,
         loading,
@@ -65,7 +67,11 @@ export const LoginPage = () => {
                     )}
 
                     <div className="form-actions">
-                        <Checkbox label="Recordarme" />
+                        <Checkbox
+                            label="Recordarme"
+                            checked={rememberMe}
+                            onChange={setRememberMe}
+                        />
                         <a href="#" className="forgot-password">¿Olvidaste tu contraseña?</a>
                     </div>
 

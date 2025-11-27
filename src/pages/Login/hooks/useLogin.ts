@@ -9,6 +9,7 @@ export const useLogin = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export const useLogin = () => {
             }
 
             // User is confirmed, proceed with login
-            login(response.user, response.token);
+            login(response.user, response.token, rememberMe);
             navigate('/');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error al iniciar sesión. Por favor, intenta de nuevo.');
@@ -61,6 +62,8 @@ export const useLogin = () => {
         setPassword,
         showPassword,
         togglePasswordVisibility,
+        rememberMe,
+        setRememberMe,
         handleLogin,
         error,
         loading,

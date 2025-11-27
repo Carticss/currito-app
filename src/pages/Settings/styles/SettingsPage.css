@@ -159,6 +159,36 @@
     resize: none;
 }
 
+.settings-add-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.settings-logout-section {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #eaeaea;
+    display: flex;
+    justify-content: center;
+}
+
+.settings-logout-btn {
+    padding: 12px 32px;
+    background: #fff;
+    color: #dc2626;
+    border: 1px solid #dc2626;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.settings-logout-btn:hover {
+    background: #dc2626;
+    color: #fff;
+}
+
 @media (max-width: 768px) {
     .settings-container {
         padding: 20px;

@@ -6,45 +6,59 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   token: string | null;
-  login: (user: User, token: string) => void;
+  login: (user: User, token: string, rememberMe?: boolean) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const REFRESH_INTERVAL = 60 * 1000;
-const TOKEN_EXPIRATION_TIME = 3 * 60 * 60 * 1000;
+const REFRESH_INTERVAL = 60 * 1000; // Check every minute
+const TOKEN_EXPIRATION_TIME = 3 * 60 * 60 * 1000; // 3 hours
+const REFRESH_THRESHOLD = TOKEN_EXPIRATION_TIME - (30 * 60 * 1000); // Refresh 30 min before expiry (at 2.5 hours)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    const savedAuth = localStorage.getItem('isAuthenticated');
+    const savedAuth = localStorage.getItem('isAuthenticated') || sessionStorage.getItem('isAuthenticated');
     return savedAuth === 'true';
   });
 
   const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
   const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('authToken');
+    return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
   });
 
   const [lastLogin, setLastLogin] = useState<number>(() => {
-    const savedLastLogin = localStorage.getItem('lastLogin');
+    const savedLastLogin = localStorage.getItem('lastLogin') || sessionStorage.getItem('lastLogin');
     return savedLastLogin ? parseInt(savedLastLogin, 10) : 0;
   });
 
-  const login = (userData: User, authToken: string) => {
+  const [rememberMe, setRememberMe] = useState<boolean>(() => {
+    return localStorage.getItem('rememberMe') === 'true';
+  });
+
+  const login = (userData: User, authToken: string, shouldRemember: boolean = false) => {
     const now = Date.now();
     setIsAuthenticated(true);
     setUser(userData);
     setToken(authToken);
     setLastLogin(now);
-    localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('authToken', authToken);
-    localStorage.setItem('lastLogin', now.toString());
+    setRememberMe(shouldRemember);
+
+    const storage = shouldRemember ? localStorage : sessionStorage;
+    storage.setItem('isAuthenticated', 'true');
+    storage.setItem('user', JSON.stringify(userData));
+    storage.setItem('authToken', authToken);
+    storage.setItem('lastLogin', now.toString());
+
+    if (shouldRemember) {
+      localStorage.setItem('rememberMe', 'true');
+    } else {
+      localStorage.removeItem('rememberMe');
+    }
   };
 
   const logout = () => {
@@ -52,10 +66,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setToken(null);
     setLastLogin(0);
+    setRememberMe(false);
+
+    // Clear from both storages
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('user');
     localStorage.removeItem('authToken');
     localStorage.removeItem('lastLogin');
+    localStorage.removeItem('rememberMe');
+
+    sessionStorage.removeItem('isAuthenticated');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('lastLogin');
   };
 
   useEffect(() => {
@@ -71,15 +94,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const now = Date.now();
       const timeSinceLogin = now - lastLogin;
 
-      if (timeSinceLogin > TOKEN_EXPIRATION_TIME) {
+      // Refresh token BEFORE it expires (at 2.5 hours instead of after 3 hours)
+      if (timeSinceLogin > REFRESH_THRESHOLD) {
         try {
+          console.log('Refreshing token before expiration...');
           const response = await AuthRepository.refreshToken(token);
           const newToken = response.token;
 
           setToken(newToken);
           setLastLogin(now);
-          localStorage.setItem('authToken', newToken);
-          localStorage.setItem('lastLogin', now.toString());
+
+          const storage = rememberMe ? localStorage : sessionStorage;
+          storage.setItem('authToken', newToken);
+          storage.setItem('lastLogin', now.toString());
 
           console.log('Token refreshed successfully');
         } catch (error) {
@@ -94,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const intervalId = setInterval(checkTokenRefresh, REFRESH_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [isAuthenticated, token, lastLogin]);
+  }, [isAuthenticated, token, lastLogin, rememberMe]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout }}>
