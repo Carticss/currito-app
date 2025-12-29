@@ -7,10 +7,9 @@ const axiosInstance = axios.create({
     },
 });
 
-// Add request interceptor to include token if available
 axiosInstance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
