@@ -70,6 +70,10 @@ export interface Message {
     waMessageId: string;
     type: string;
     bodyText: string;
+    payload?: {
+        imageUrl?: string;
+        [key: string]: any;
+    };
     sentAt: string;
     createdAt: string;
     updatedAt: string;

@@ -26,7 +26,12 @@ export const ChatView: React.FC<ChatViewProps> = ({ orderId }) => {
                                 key={message._id}
                                 className={`chat-bubble ${message.direction === 'outbound' ? 'outbound' : 'inbound'}`}
                             >
-                                <div className="chat-body">{message.bodyText}</div>
+                                {message.type === 'image' && message.payload?.imageUrl ? (
+                                    <div className="chat-image-container">
+                                        <img src={message.payload.imageUrl} alt="Message image" className="chat-image" />
+                                    </div>
+                                ) : null}
+                                {message.bodyText && <div className="chat-body">{message.bodyText}</div>}
                                 <div className="chat-meta">
                                     <span>{formatTimestamp(message.sentAt)}</span>
                                 </div>

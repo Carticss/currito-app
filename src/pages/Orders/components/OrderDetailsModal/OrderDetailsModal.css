@@ -216,3 +216,18 @@
 .chat-status.error {
     color: #d32f2f;
 }
+
+.chat-image-container {
+    width: 100%;
+    max-width: 300px;
+    overflow: hidden;
+    border-radius: 12px;
+    margin-bottom: 8px;
+}
+
+.chat-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+}
