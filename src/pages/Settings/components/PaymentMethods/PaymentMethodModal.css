@@ -1,0 +1,287 @@
+.payment-method-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.payment-method-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.payment-method-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eaeaea;
+    position: sticky;
+    top: 0;
+    background: white;
+}
+
+.payment-method-modal-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.payment-method-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    transition: color 0.2s;
+}
+
+.payment-method-modal-close:hover:not(:disabled) {
+    color: #000;
+}
+
+.payment-method-modal-close:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.payment-method-modal-error {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 12px 20px;
+    margin: 0;
+    font-size: 14px;
+    border-bottom: 1px solid #fecaca;
+}
+
+.payment-method-form {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #1f2937;
+}
+
+.form-group input[type="text"],
+.form-group input[type="file"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.form-group input[type="text"]:disabled,
+.form-group select:disabled,
+.form-group textarea:disabled {
+    background: #f3f4f6;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.char-count {
+    display: block;
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 4px;
+}
+
+.help-text {
+    font-size: 12px;
+    color: #9ca3af;
+    margin: 4px 0 0;
+}
+
+.form-group.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.form-group.checkbox input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+.form-group.checkbox label {
+    margin: 0;
+    margin-bottom: 0;
+}
+
+.file-input-wrapper {
+    position: relative;
+}
+
+#payment-image-input {
+    display: none;
+}
+
+.file-input-label {
+    display: block;
+    padding: 10px 12px;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    cursor: pointer;
+    text-align: center;
+    font-size: 14px;
+    color: #6b7280;
+    transition: all 0.2s;
+    margin: 0;
+}
+
+.file-input-label:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+#payment-image-input:disabled + .file-input-label {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.image-preview {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+    text-align: center;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 6px;
+    object-fit: contain;
+}
+
+.image-preview-container {
+    margin-bottom: 12px;
+}
+
+.btn-delete-image {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-delete-image:hover:not(:disabled) {
+    background: #fecaca;
+}
+
+.btn-delete-image:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.payment-method-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #eaeaea;
+}
+
+.btn-secondary,
+.btn-primary {
+    flex: 1;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #d1d5db;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.btn-secondary:disabled,
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.disabled-input {
+    background: #f3f4f6 !important;
+    color: #6b7280 !important;
+}
+
+@media (max-width: 480px) {
+    .payment-method-modal {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .payment-method-form {
+        padding: 16px;
+    }
+}

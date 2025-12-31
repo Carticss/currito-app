@@ -9,6 +9,7 @@ export const formatCurrency = (amountInCents: number) => {
 export const getStatusLabel = (status: string) => {
     switch (status) {
         case 'pending_user_response': return 'Pendiente respuesta cliente';
+        case 'awaiting_payment': return 'Pendiente de pago';
         case 'confirmed': return 'Confirmado';
         case 'completed': return 'Completado';
         case 'cancelled': return 'Cancelado';

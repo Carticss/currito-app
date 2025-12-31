@@ -1,4 +1,4 @@
-import axiosInstance from '../../../api/axiosInstance';
+import axiosInstance from '../../../config/axiosInstance';
 
 export interface OrganizationResponse {
     _id: string;

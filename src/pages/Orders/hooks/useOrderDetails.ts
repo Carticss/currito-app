@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Order, Product } from '../types/types';
 import { useOrderEditQueue } from './useOrderEditQueue';
+import { OrdersRepository } from '../repositories/OrdersRepository';
 
 export const useOrderDetails = (order: Order, onClose: () => void) => {
     const [activeTab, setActiveTab] = useState<'details' | 'chat'>('details');
@@ -74,12 +75,24 @@ export const useOrderDetails = (order: Order, onClose: () => void) => {
     };
 
     const handleConfirmOrder = async () => {
-        const result = await executePendingActions(order._id);
-        if (result.success) {
-            onClose();
-            window.location.reload();
+        if (pendingActions.length > 0) {
+            // If there are pending actions, execute them
+            const result = await executePendingActions(order._id);
+            if (result.success) {
+                onClose();
+                window.location.reload();
+            } else {
+                alert('Error al actualizar el pedido. Por favor intente nuevamente.');
+            }
         } else {
-            alert('Error al actualizar el pedido. Por favor intente nuevamente.');
+            // If no pending actions, accept the order by updating status
+            try {
+                await OrdersRepository.updateOrderStatus(order._id, 'awaiting_payment');
+                onClose();
+                window.location.reload();
+            } catch (error) {
+                alert('Error al aceptar el pedido. Por favor intente nuevamente.');
+            }
         }
     };
 

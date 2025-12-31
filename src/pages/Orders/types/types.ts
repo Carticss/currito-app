@@ -61,6 +61,24 @@ export interface Order {
     orderItems: OrderItem[];
 }
 
+export interface Message {
+    _id: string;
+    conversationId: string;
+    organizationId: string;
+    endUserId: EndUser;
+    direction: 'inbound' | 'outbound';
+    waMessageId: string;
+    type: string;
+    bodyText: string;
+    sentAt: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface MessagesResponse {
+    messages: Message[];
+}
+
 export interface OrdersResponse {
     orders: Order[];
 }

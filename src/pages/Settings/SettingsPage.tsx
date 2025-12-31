@@ -4,6 +4,7 @@ import { HiLocationMarker, HiPhone, HiMail, HiGlobe, HiLink } from 'react-icons/
 import { useOrganization } from './hooks/useSettings';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { PaymentMethods } from './components/PaymentMethods/PaymentMethods';
 
 export const SettingsPage: React.FC = () => {
     const { organization, loading } = useOrganization();
@@ -105,6 +106,8 @@ export const SettingsPage: React.FC = () => {
                     + Agregar enlace social
                 </button>
             </div>
+
+            <PaymentMethods />
 
             <div className="settings-logout-section">
                 <button className="settings-logout-btn" onClick={handleLogout}>

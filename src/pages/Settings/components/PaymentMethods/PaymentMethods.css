@@ -1,0 +1,237 @@
+.payment-methods-container {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 25px;
+    margin-bottom: 28px;
+    border: 1px solid #eaeaea;
+}
+
+.payment-methods-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.payment-methods-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.payment-methods-add-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.payment-methods-add-btn:hover {
+    background: #1d4ed8;
+}
+
+.payment-methods-add-btn:active {
+    background: #1e40af;
+}
+
+.payment-methods-error {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.payment-methods-loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+.payment-methods-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+}
+
+.payment-methods-empty p {
+    margin: 0 0 16px;
+    font-size: 14px;
+}
+
+.payment-methods-empty-btn {
+    padding: 10px 20px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.payment-methods-empty-btn:hover {
+    background: #1d4ed8;
+}
+
+.payment-methods-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.payment-method-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+    transition: all 0.2s;
+}
+
+.payment-method-card:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.payment-method-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+}
+
+.payment-method-info {
+    flex: 1;
+}
+
+.payment-method-key {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    color: #1f2937;
+}
+
+.payment-method-type {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 4px;
+}
+
+.payment-method-value {
+    font-size: 14px;
+    color: #374151;
+    margin: 4px 0 0;
+    word-break: break-all;
+}
+
+.payment-method-image {
+    max-width: 150px;
+    max-height: 100px;
+    border-radius: 6px;
+    margin-top: 8px;
+    object-fit: contain;
+}
+
+.payment-method-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.status-badge.inactive {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.payment-method-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.payment-method-edit-btn,
+.payment-method-delete-btn {
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-size: 16px;
+}
+
+.payment-method-edit-btn {
+    color: #2563eb;
+}
+
+.payment-method-edit-btn:hover {
+    background: #eff6ff;
+    border-color: #2563eb;
+}
+
+.payment-method-delete-btn {
+    color: #dc2626;
+}
+
+.payment-method-delete-btn:hover:not(:disabled) {
+    background: #fef2f2;
+    border-color: #dc2626;
+}
+
+.payment-method-delete-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .payment-method-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .payment-method-content {
+        width: 100%;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .payment-methods-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .payment-methods-add-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

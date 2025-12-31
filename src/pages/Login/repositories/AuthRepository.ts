@@ -1,4 +1,4 @@
-import axiosInstance from '../../../api/axiosInstance';
+import axiosInstance from '../../../config/axiosInstance';
 import type { LoginRequest, LoginResponse, RefreshTokenResponse } from '../types/types';
 
 export const AuthRepository = {
