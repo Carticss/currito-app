@@ -85,13 +85,19 @@ export const useOrderDetails = (order: Order, onClose: () => void) => {
                 alert('Error al actualizar el pedido. Por favor intente nuevamente.');
             }
         } else {
-            // If no pending actions, accept the order by updating status
+            // If no pending actions, update status based on current order status
             try {
-                await OrdersRepository.updateOrderStatus(order._id, 'awaiting_payment');
+                let nextStatus = 'awaiting_payment';
+                if (order.status === 'pending_order_confirmation') {
+                    nextStatus = 'awaiting_payment';
+                } else if (order.status === 'pending_payment_confirmation') {
+                    nextStatus = 'completed';
+                }
+                await OrdersRepository.updateOrderStatus(order._id, nextStatus);
                 onClose();
                 window.location.reload();
             } catch (error) {
-                alert('Error al aceptar el pedido. Por favor intente nuevamente.');
+                alert('Error al procesar el pedido. Por favor intente nuevamente.');
             }
         }
     };
@@ -113,6 +119,14 @@ export const useOrderDetails = (order: Order, onClose: () => void) => {
         return existingIds;
     };
 
+    const getConfirmButtonLabel = () => {
+        if (isExecuting) return 'Procesando...';
+        if (pendingActions.length > 0) return 'Confirmar Cambio';
+        if (order.status === 'pending_order_confirmation') return 'Aceptar Orden';
+        if (order.status === 'pending_payment_confirmation') return 'Confirmar Pago';
+        return 'Aceptar Orden';
+    };
+
     return {
         activeTab,
         setActiveTab,
@@ -132,6 +146,7 @@ export const useOrderDetails = (order: Order, onClose: () => void) => {
         handleConfirmOrder,
         getPendingStatus,
         getExistingProductIds,
+        getConfirmButtonLabel,
         itemToExchange
     };
 };

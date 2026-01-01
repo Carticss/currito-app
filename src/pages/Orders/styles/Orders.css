@@ -65,7 +65,7 @@
 /* Grid Layout */
 .orders-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 20px;
 }
 
@@ -84,18 +84,27 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 12px;
+}
+
+.card-header > div:first-child {
+    flex: 1;
+    min-width: 0;
 }
 
 .customer-name {
     font-size: 16px;
     font-weight: 600;
     margin: 0;
+    word-break: break-word;
 }
 
 .order-meta {
     font-size: 12px;
     color: #6c757d;
     margin-top: 4px;
+    word-break: break-all;
+    overflow-wrap: break-word;
 }
 
 .status-badge {
@@ -103,6 +112,8 @@
     border-radius: 12px;
     font-size: 12px;
     font-weight: 500;
+    white-space: nowrap;
+    display: inline-block;
 }
 
 /* Status styles removed from here, handled inline via formatting.ts */

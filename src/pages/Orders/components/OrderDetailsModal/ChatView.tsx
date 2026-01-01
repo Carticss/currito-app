@@ -31,7 +31,15 @@ export const ChatView: React.FC<ChatViewProps> = ({ orderId }) => {
                                         <img src={message.payload.imageUrl} alt="Message image" className="chat-image" />
                                     </div>
                                 ) : null}
-                                {message.bodyText && <div className="chat-body">{message.bodyText}</div>}
+                                {message.bodyText && (
+                                    <div className="chat-body">
+                                        {message.bodyText
+                                            .replace('[Imagen recibida]:', '')
+                                            .replace('[Imagen recibida]', '')
+                                            .replace('[Mensaje sin texto]', '')
+                                            .trim()}
+                                    </div>
+                                )}
                                 <div className="chat-meta">
                                     <span>{formatTimestamp(message.sentAt)}</span>
                                 </div>

@@ -30,7 +30,8 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
         handleDeleteItem,
         handleConfirmOrder,
         getPendingStatus,
-        getExistingProductIds
+        getExistingProductIds,
+        getConfirmButtonLabel
     } = useOrderDetails(order, onClose);
 
     return (
@@ -83,7 +84,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
                         onClick={handleConfirmOrder}
                         disabled={isExecuting}
                     >
-                        {isExecuting ? 'Procesando...' : pendingActions.length > 0 ? 'Confirmar Cambio' : 'Aceptar Orden'}
+                        {getConfirmButtonLabel()}
                     </button>
                 </div>
             </div>
