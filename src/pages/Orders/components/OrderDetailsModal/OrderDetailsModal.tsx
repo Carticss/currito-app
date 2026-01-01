@@ -71,22 +71,24 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
                             handleOpenExchangeModal={handleOpenExchangeModal}
                             handleDeleteItem={handleDeleteItem}
                             handleOpenAddModal={handleOpenAddModal}
+                            isOrderCompleted={order.status === 'completed'}
                         />
 
                         <ChatView orderId={order._id} />
                     </div>
                 </div>
 
-                <div className="modal-footer">
-                    <button className="action-btn outline">Marcar como entregado</button>
-                    <button
-                        className="action-btn primary"
-                        onClick={handleConfirmOrder}
-                        disabled={isExecuting}
-                    >
-                        {getConfirmButtonLabel()}
-                    </button>
-                </div>
+                {order.status !== 'completed' && (
+                    <div className="modal-footer">
+                        <button
+                            className="action-btn primary"
+                            onClick={handleConfirmOrder}
+                            disabled={isExecuting}
+                        >
+                            {getConfirmButtonLabel()}
+                        </button>
+                    </div>
+                )}
             </div>
 
             <ExtraItemModal

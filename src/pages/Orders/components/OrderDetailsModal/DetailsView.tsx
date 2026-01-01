@@ -11,6 +11,7 @@ interface DetailsViewProps {
     handleOpenExchangeModal: (itemId: string) => void;
     handleDeleteItem: (itemId: string) => void;
     handleOpenAddModal: () => void;
+    isOrderCompleted?: boolean;
 }
 
 export const DetailsView: React.FC<DetailsViewProps> = ({
@@ -21,6 +22,7 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
     handleOpenExchangeModal,
     handleDeleteItem,
     handleOpenAddModal,
+    isOrderCompleted = false,
 }) => {
     const date = new Date(order.createdAt).toLocaleDateString('es-ES', {
         day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -75,27 +77,31 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
                                         </div>
                                     </div>
                                     <div className="product-actions">
-                                        <button
-                                            className="action-btn secondary small"
-                                            onClick={() => handleOpenEditQuantityModal(item)}
-                                            disabled={isDisabled}
-                                        >
-                                            Editar Cantidad
-                                        </button>
-                                        <button
-                                            className="action-btn secondary small"
-                                            onClick={() => handleOpenExchangeModal(item._id)}
-                                            disabled={isDisabled}
-                                        >
-                                            Ofrecer Intercambio ⇄
-                                        </button>
-                                        <button
-                                            className="action-btn danger small"
-                                            onClick={() => handleDeleteItem(item._id)}
-                                            disabled={isDisabled}
-                                        >
-                                            Eliminar
-                                        </button>
+                                        {!isOrderCompleted && (
+                                            <>
+                                                <button
+                                                    className="action-btn secondary small"
+                                                    onClick={() => handleOpenEditQuantityModal(item)}
+                                                    disabled={isDisabled}
+                                                >
+                                                    Editar Cantidad
+                                                </button>
+                                                <button
+                                                    className="action-btn secondary small"
+                                                    onClick={() => handleOpenExchangeModal(item._id)}
+                                                    disabled={isDisabled}
+                                                >
+                                                    Ofrecer Intercambio ⇄
+                                                </button>
+                                                <button
+                                                    className="action-btn danger small"
+                                                    onClick={() => handleDeleteItem(item._id)}
+                                                    disabled={isDisabled}
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -136,12 +142,14 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
                             );
                         })}
                     </div>
-                    <button
-                        className="offer-product-btn"
-                        onClick={handleOpenAddModal}
-                    >
-                        Ofrecer otro producto +
-                    </button>
+                    {!isOrderCompleted && (
+                        <button
+                            className="offer-product-btn"
+                            onClick={handleOpenAddModal}
+                        >
+                            Ofrecer otro producto +
+                        </button>
+                    )}
                 </div>
 
                 <div className="summary-section">
