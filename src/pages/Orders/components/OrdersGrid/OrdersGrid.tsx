@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Order } from '../../types/types';
 import { OrderCard } from '../OrderCard/OrderCard';
+import { OrdersGridSkeleton } from './OrdersGridSkeleton';
 
 interface OrdersGridProps {
     orders: Order[];
@@ -10,7 +11,7 @@ interface OrdersGridProps {
 }
 
 export const OrdersGrid: React.FC<OrdersGridProps> = ({ orders, loading, error, onViewDetails }) => {
-    if (loading) return <div>Cargando pedidos...</div>;
+    if (loading) return <OrdersGridSkeleton />;
     if (error) return <div>Error: {error}</div>;
     if (orders.length === 0) return <div>No se encontraron pedidos.</div>;
 

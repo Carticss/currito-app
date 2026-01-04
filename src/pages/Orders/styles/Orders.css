@@ -80,6 +80,10 @@
     gap: 15px;
 }
 
+.order-card.skeleton-card {
+    pointer-events: none;
+}
+
 .card-header {
     display: flex;
     justify-content: space-between;
@@ -248,6 +252,84 @@
 .calendar-day.selected {
     background-color: #007bff;
     color: white;
+}
+
+/* Skeletons */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+}
+
+.skeleton-text {
+    height: 14px;
+    width: 120px;
+}
+
+.skeleton-text.short {
+    width: 80px;
+}
+
+.skeleton-title {
+    height: 18px;
+    width: 180px;
+    margin-bottom: 6px;
+}
+
+.skeleton-sub {
+    height: 14px;
+    width: 140px;
+    margin-bottom: 4px;
+}
+
+.skeleton-badge {
+    height: 24px;
+    width: 120px;
+    border-radius: 12px;
+    margin-left: auto;
+}
+
+.skeleton-amount {
+    height: 18px;
+    width: 90px;
+    margin-top: 10px;
+    margin-left: auto;
+}
+
+.skeleton-label {
+    height: 12px;
+    width: 120px;
+    margin-bottom: 10px;
+}
+
+.skeleton-chip {
+    height: 32px;
+    width: 80px;
+    border-radius: 16px;
+}
+
+.skeleton-chip.wide {
+    width: 110px;
+}
+
+.skeleton-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.orders-grid.skeleton-grid .order-items {
+    flex-wrap: wrap;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 .calendar-day.in-range {
