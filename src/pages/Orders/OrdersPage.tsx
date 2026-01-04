@@ -4,6 +4,7 @@ import { OrdersGrid } from './components/OrdersGrid/OrdersGrid';
 import { OrderDetailsModal } from './components/OrderDetailsModal/OrderDetailsModal';
 import './styles/Orders.css'
 import { OrdersFilter } from './components/OrdersFilter/OrdersFilter';
+import type { Order } from './types/types';
 
 export const OrdersPage: React.FC = () => {
     const {
@@ -20,8 +21,16 @@ export const OrdersPage: React.FC = () => {
         selectedOrder,
         setSelectedOrder,
         showCalendar,
-        setShowCalendar
+        setShowCalendar,
+        updateOrderInList
     } = useOrders();
+
+    const handleOrderUpdate = (updatedOrder: Order) => {
+        // Update the order in the list
+        updateOrderInList(updatedOrder);
+        // Also update the selected order
+        setSelectedOrder(updatedOrder);
+    };
 
     return (
         <div className="orders-page">
@@ -49,6 +58,7 @@ export const OrdersPage: React.FC = () => {
                 <OrderDetailsModal
                     order={selectedOrder}
                     onClose={() => setSelectedOrder(null)}
+                    onOrderUpdate={handleOrderUpdate}
                 />
             )}
         </div>

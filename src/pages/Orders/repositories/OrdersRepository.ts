@@ -25,5 +25,16 @@ export const OrdersRepository = {
     updateOrderStatus: async (orderId: string, status: string): Promise<Order> => {
         const response = await axiosInstance.put<{ order: Order }>(`/api/v1/orders/${orderId}`, { status });
         return response.data.order;
+    },
+
+    syncOrderItems: async (orderId: string, items: { productId: string; quantity: number }[]): Promise<Order> => {
+        const response = await axiosInstance.put<{ order: Order; orderItems: Order['orderItems'] }>(
+            `/api/v1/orders/${orderId}/items/sync`, 
+            { items }
+        );
+        return {
+            ...response.data.order,
+            orderItems: response.data.orderItems
+        };
     }
 };

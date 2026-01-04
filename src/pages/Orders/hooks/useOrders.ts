@@ -82,6 +82,12 @@ export const useOrders = () => {
         return matchesSearch && matchesStatus && matchesDate;
     });
 
+    const updateOrderInList = (updatedOrder: Order) => {
+        setOrders(prev => prev.map(order => 
+            order._id === updatedOrder._id ? updatedOrder : order
+        ));
+    };
+
     return {
         orders: filteredOrders,
         loading,
@@ -97,6 +103,7 @@ export const useOrders = () => {
         setSelectedOrder,
         showCalendar,
         setShowCalendar,
+        updateOrderInList,
         refreshOrders: async () => {
             try {
                 setLoading(true);

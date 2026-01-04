@@ -1,28 +1,46 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Order, Product } from '../types/types';
-import { useOrderEditQueue } from './useOrderEditQueue';
 import { OrdersRepository } from '../repositories/OrdersRepository';
 
-export const useOrderDetails = (order: Order, onClose: () => void) => {
+export interface LocalOrderItem {
+    _id: string;
+    productId: Product;
+    quantity: number;
+    isNew?: boolean; // Flag to identify newly added items
+    isModified?: boolean; // Flag to identify items with changed quantity
+    isDeleted?: boolean; // Flag to identify items marked for deletion
+}
+
+export const useOrderDetails = (
+    order: Order, 
+    _onClose: () => void,
+    onOrderUpdate?: (updatedOrder: Order) => void
+) => {
     const [activeTab, setActiveTab] = useState<'details' | 'chat'>('details');
     const [tabIndicatorStyle, setTabIndicatorStyle] = useState({});
     const tabsRef = useRef<HTMLDivElement>(null);
+    const [isExecuting, setIsExecuting] = useState(false);
+    
+    // Current order state - can be updated after sync
+    const [currentOrder, setCurrentOrder] = useState<Order>(order);
 
-    // Order Edit Queue Hook
-    const {
-        pendingActions,
-        queueAddItem,
-        queueUpdateItem,
-        queueDeleteItem,
-        executePendingActions,
-        isExecuting
-    } = useOrderEditQueue();
+    // Local items state - initialized from order items
+    const [localItems, setLocalItems] = useState<LocalOrderItem[]>(() => 
+        order.orderItems.map(item => ({
+            _id: item._id,
+            productId: item.productId,
+            quantity: item.quantity,
+            isNew: false,
+            isModified: false,
+            isDeleted: false
+        }))
+    );
 
     // Modal State
     const [isExtraItemModalOpen, setIsExtraItemModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit_quantity'>('add');
     const [modalInitialItem, setModalInitialItem] = useState<{ product: Product; quantity: number } | undefined>(undefined);
-    const [itemToExchange, setItemToExchange] = useState<string | null>(null);
+    const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
     useEffect(() => {
         if (tabsRef.current) {
@@ -39,100 +57,201 @@ export const useOrderDetails = (order: Order, onClose: () => void) => {
     const handleOpenAddModal = () => {
         setModalMode('add');
         setModalInitialItem(undefined);
-        setItemToExchange(null);
+        setEditingItemId(null);
         setIsExtraItemModalOpen(true);
     };
 
     const handleOpenExchangeModal = (itemId: string) => {
+        // For exchange, we mark the item as deleted and open add modal
+        setLocalItems(prev => prev.map(item => 
+            item._id === itemId ? { ...item, isDeleted: true } : item
+        ));
         setModalMode('add');
         setModalInitialItem(undefined);
-        setItemToExchange(itemId);
+        setEditingItemId(null);
         setIsExtraItemModalOpen(true);
     };
 
-    const handleOpenEditQuantityModal = (item: { _id: string; productId: Product; quantity: number }) => {
+    const handleOpenEditQuantityModal = (item: LocalOrderItem) => {
         setModalMode('edit_quantity');
         setModalInitialItem({ product: item.productId, quantity: item.quantity });
-        setItemToExchange(item._id);
+        setEditingItemId(item._id);
         setIsExtraItemModalOpen(true);
     };
 
     const handleModalConfirm = (product: any, quantity: number) => {
         if (modalMode === 'add') {
-            if (itemToExchange) {
-                queueDeleteItem(itemToExchange);
-                queueAddItem(product._id, quantity, product.name, itemToExchange, product.priceInCents);
+            // Check if product already exists in local items (non-deleted)
+            const existingItem = localItems.find(
+                item => item.productId._id === product._id && !item.isDeleted
+            );
+
+            if (existingItem) {
+                // Update quantity of existing item
+                setLocalItems(prev => prev.map(item =>
+                    item._id === existingItem._id
+                        ? { ...item, quantity: item.quantity + quantity, isModified: true }
+                        : item
+                ));
             } else {
-                queueAddItem(product._id, quantity, product.name, undefined, product.priceInCents);
+                // Add new item with a temporary ID
+                const newItem: LocalOrderItem = {
+                    _id: `temp-${Date.now()}`,
+                    productId: product,
+                    quantity,
+                    isNew: true,
+                    isModified: false,
+                    isDeleted: false
+                };
+                setLocalItems(prev => [...prev, newItem]);
             }
-        } else if (modalMode === 'edit_quantity' && itemToExchange) {
-            queueUpdateItem(itemToExchange, quantity);
+        } else if (modalMode === 'edit_quantity' && editingItemId) {
+            // Update quantity of existing item
+            setLocalItems(prev => prev.map(item =>
+                item._id === editingItemId
+                    ? { ...item, quantity, isModified: !item.isNew }
+                    : item
+            ));
         }
     };
 
     const handleDeleteItem = (itemId: string) => {
-        queueDeleteItem(itemId);
+        setLocalItems(prev => {
+            const item = prev.find(i => i._id === itemId);
+            if (item?.isNew) {
+                // Remove newly added items completely
+                return prev.filter(i => i._id !== itemId);
+            }
+            // Mark existing items as deleted
+            return prev.map(i => 
+                i._id === itemId ? { ...i, isDeleted: true } : i
+            );
+        });
+    };
+
+    const handleRestoreItem = (itemId: string) => {
+        setLocalItems(prev => prev.map(item =>
+            item._id === itemId ? { ...item, isDeleted: false } : item
+        ));
+    };
+
+    const hasChanges = () => {
+        return localItems.some(item => item.isNew || item.isModified || item.isDeleted);
+    };
+
+    const resetLocalItemsFromOrder = (updatedOrder: Order) => {
+        setLocalItems(
+            updatedOrder.orderItems.map(item => ({
+                _id: item._id,
+                productId: item.productId,
+                quantity: item.quantity,
+                isNew: false,
+                isModified: false,
+                isDeleted: false
+            }))
+        );
     };
 
     const handleConfirmOrder = async () => {
-        if (pendingActions.length > 0) {
-            // If there are pending actions, execute them
-            const result = await executePendingActions(order._id);
-            if (result.success) {
-                onClose();
-                window.location.reload();
-            } else {
+        if (hasChanges()) {
+            setIsExecuting(true);
+            try {
+                // Build the items array for sync
+                // Include all non-deleted items with their quantities
+                // Items with quantity 0 will be deleted by the backend
+                const itemsToSync = localItems
+                    .filter(item => !item.isDeleted)
+                    .map(item => ({
+                        productId: item.productId._id,
+                        quantity: item.quantity
+                    }));
+
+                // Add deleted items with quantity 0 (only original items, not new ones)
+                const deletedItems = localItems
+                    .filter(item => item.isDeleted && !item.isNew)
+                    .map(item => ({
+                        productId: item.productId._id,
+                        quantity: 0
+                    }));
+
+                const allItems = [...itemsToSync, ...deletedItems];
+
+                // syncOrderItems returns the updated order with orderItems
+                const updatedOrder = await OrdersRepository.syncOrderItems(currentOrder._id, allItems);
+                
+                // Update local state with fresh data
+                setCurrentOrder(updatedOrder);
+                resetLocalItemsFromOrder(updatedOrder);
+                
+                // Notify parent component
+                if (onOrderUpdate) {
+                    onOrderUpdate(updatedOrder);
+                }
+            } catch (error) {
+                console.error('Error syncing order items:', error);
                 alert('Error al actualizar el pedido. Por favor intente nuevamente.');
+            } finally {
+                setIsExecuting(false);
             }
         } else {
-            // If no pending actions, update status based on current order status
+            // If no changes, update status based on current order status
+            setIsExecuting(true);
             try {
                 let nextStatus = 'awaiting_payment';
-                if (order.status === 'pending_order_confirmation') {
+                if (currentOrder.status === 'pending_order_confirmation') {
                     nextStatus = 'awaiting_payment';
-                } else if (order.status === 'pending_payment_confirmation') {
+                } else if (currentOrder.status === 'pending_payment_confirmation') {
                     nextStatus = 'completed';
                 }
-                await OrdersRepository.updateOrderStatus(order._id, nextStatus);
-                onClose();
-                window.location.reload();
+                const updatedOrderData = await OrdersRepository.updateOrderStatus(currentOrder._id, nextStatus);
+                
+                // Combine updated order data with current orderItems (status change doesn't affect items)
+                const updatedOrder = {
+                    ...updatedOrderData,
+                    orderItems: currentOrder.orderItems
+                };
+                
+                // Update local state
+                setCurrentOrder(updatedOrder);
+                
+                // Notify parent component
+                if (onOrderUpdate) {
+                    onOrderUpdate(updatedOrder);
+                }
             } catch (error) {
                 alert('Error al procesar el pedido. Por favor intente nuevamente.');
+            } finally {
+                setIsExecuting(false);
             }
         }
     };
 
-    const getPendingStatus = (itemId: string) => {
-        const deleteAction = pendingActions.find(a => a.type === 'delete' && a.itemId === itemId);
-        if (deleteAction) return 'pending-delete';
-
-        const updateAction = pendingActions.find(a => a.type === 'update' && a.itemId === itemId);
-        if (updateAction) return 'pending-update';
-
-        return null;
-    };
-
     const getExistingProductIds = () => {
-        // Get all product IDs from current order items
-        // During exchange, we still want to prevent replacing with the same product
-        const existingIds = order.orderItems.map(item => item.productId._id);
-        return existingIds;
+        // Get all product IDs from current local items that are not deleted
+        return localItems
+            .filter(item => !item.isDeleted)
+            .map(item => item.productId._id);
     };
 
     const getConfirmButtonLabel = () => {
         if (isExecuting) return 'Procesando...';
-        if (pendingActions.length > 0) return 'Confirmar Cambio';
-        if (order.status === 'pending_order_confirmation') return 'Aceptar Orden';
-        if (order.status === 'pending_payment_confirmation') return 'Confirmar Pago';
+        if (hasChanges()) return 'Confirmar Cambios';
+        if (currentOrder.status === 'pending_order_confirmation') return 'Aceptar Orden';
+        if (currentOrder.status === 'pending_payment_confirmation') return 'Confirmar Pago';
         return 'Aceptar Orden';
     };
+
+    const getVisibleItems = () => localItems.filter(item => !item.isDeleted);
+
+    const getDeletedItems = () => localItems.filter(item => item.isDeleted && !item.isNew);
 
     return {
         activeTab,
         setActiveTab,
         tabIndicatorStyle,
         tabsRef,
-        pendingActions,
+        localItems,
+        currentOrder,
         isExecuting,
         isExtraItemModalOpen,
         setIsExtraItemModalOpen,
@@ -143,10 +262,12 @@ export const useOrderDetails = (order: Order, onClose: () => void) => {
         handleOpenEditQuantityModal,
         handleModalConfirm,
         handleDeleteItem,
+        handleRestoreItem,
         handleConfirmOrder,
-        getPendingStatus,
         getExistingProductIds,
         getConfirmButtonLabel,
-        itemToExchange
+        getVisibleItems,
+        getDeletedItems,
+        hasChanges
     };
 };

@@ -9,15 +9,16 @@ import './OrderDetailsModal.css';
 interface OrderDetailsModalProps {
     order: Order;
     onClose: () => void;
+    onOrderUpdate?: (updatedOrder: Order) => void;
 }
 
-export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose }) => {
+export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, onOrderUpdate }) => {
     const {
         activeTab,
         setActiveTab,
         tabIndicatorStyle,
         tabsRef,
-        pendingActions,
+        currentOrder,
         isExecuting,
         isExtraItemModalOpen,
         setIsExtraItemModalOpen,
@@ -28,19 +29,21 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
         handleOpenEditQuantityModal,
         handleModalConfirm,
         handleDeleteItem,
+        handleRestoreItem,
         handleConfirmOrder,
-        getPendingStatus,
         getExistingProductIds,
-        getConfirmButtonLabel
-    } = useOrderDetails(order, onClose);
+        getConfirmButtonLabel,
+        getVisibleItems,
+        getDeletedItems
+    } = useOrderDetails(order, onClose, onOrderUpdate);
 
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-container" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <div>
-                        <h2 className="modal-title">Pedido {order.orderNumber}</h2>
-                        <div className="modal-subtitle">{order.endUserId.name} • {order.endUserId.whatsappNumber}</div>
+                        <h2 className="modal-title">Pedido {currentOrder.orderNumber}</h2>
+                        <div className="modal-subtitle">{currentOrder.endUserId.name} • {currentOrder.endUserId.whatsappNumber}</div>
                     </div>
                     <button className="modal-close-btn" onClick={onClose}>×</button>
                 </div>
@@ -64,21 +67,22 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
                 <div className="modal-content-viewport">
                     <div className={`views-slider ${activeTab}`}>
                         <DetailsView
-                            order={order}
-                            pendingActions={pendingActions}
-                            getPendingStatus={getPendingStatus}
+                            order={currentOrder}
+                            visibleItems={getVisibleItems()}
+                            deletedItems={getDeletedItems()}
                             handleOpenEditQuantityModal={handleOpenEditQuantityModal}
                             handleOpenExchangeModal={handleOpenExchangeModal}
                             handleDeleteItem={handleDeleteItem}
+                            handleRestoreItem={handleRestoreItem}
                             handleOpenAddModal={handleOpenAddModal}
-                            isOrderCompleted={order.status === 'completed'}
+                            isOrderCompleted={currentOrder.status === 'completed'}
                         />
 
-                        <ChatView orderId={order._id} />
+                        <ChatView orderId={currentOrder._id} />
                     </div>
                 </div>
 
-                {order.status !== 'completed' && (
+                {currentOrder.status !== 'completed' && (
                     <div className="modal-footer">
                         <button
                             className="action-btn primary"
