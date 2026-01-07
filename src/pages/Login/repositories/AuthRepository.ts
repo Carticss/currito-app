@@ -10,15 +10,10 @@ export const AuthRepository = {
         return response.data;
     },
 
-    refreshToken: async (token: string): Promise<RefreshTokenResponse> => {
+    refreshToken: async (refreshToken: string): Promise<RefreshTokenResponse> => {
         const response = await axiosInstance.post<RefreshTokenResponse>(
             '/api/v1/users/refresh-token',
-            {},
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
+            { refreshToken }
         );
         return response.data;
     },

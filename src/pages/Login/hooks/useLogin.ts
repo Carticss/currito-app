@@ -42,7 +42,7 @@ export const useLogin = () => {
             }
 
             // User is confirmed, proceed with login
-            login(response.user, response.token, rememberMe);
+            login(response.user, response.accessToken, response.refreshToken, rememberMe);
             navigate('/');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error al iniciar sesión. Por favor, intenta de nuevo.');

@@ -6,15 +6,16 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   token: string | null;
-  login: (user: User, token: string, rememberMe?: boolean) => void;
+  login: (user: User, accessToken: string, refreshToken: string, rememberMe?: boolean) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const REFRESH_INTERVAL = 60 * 1000; // Check every minute
-const TOKEN_EXPIRATION_TIME = 3 * 60 * 60 * 1000; // 3 hours
-const REFRESH_THRESHOLD = TOKEN_EXPIRATION_TIME - (30 * 60 * 1000); // Refresh 30 min before expiry (at 2.5 hours)
+const ACCESS_TOKEN_EXPIRATION = 3 * 60 * 60; // 3 hours in seconds
+const REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60; // 7 days in seconds
+const REFRESH_THRESHOLD = 30 * 60; // Refresh 30 min before accessToken expires (in seconds)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -28,7 +29,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    return localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+  });
+
+  const [refreshToken, setRefreshToken] = useState<string | null>(() => {
+    return localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
   });
 
   const [lastLogin, setLastLogin] = useState<number>(() => {
@@ -40,18 +45,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return localStorage.getItem('rememberMe') === 'true';
   });
 
-  const login = (userData: User, authToken: string, shouldRemember: boolean = false) => {
+  const login = (userData: User, accessToken: string, refreshTokenValue: string, shouldRemember: boolean = false) => {
     const now = Date.now();
     setIsAuthenticated(true);
     setUser(userData);
-    setToken(authToken);
+    setToken(accessToken);
+    setRefreshToken(refreshTokenValue);
     setLastLogin(now);
     setRememberMe(shouldRemember);
 
     const storage = shouldRemember ? localStorage : sessionStorage;
     storage.setItem('isAuthenticated', 'true');
     storage.setItem('user', JSON.stringify(userData));
-    storage.setItem('authToken', authToken);
+    storage.setItem('accessToken', accessToken);
+    storage.setItem('refreshToken', refreshTokenValue);
     storage.setItem('lastLogin', now.toString());
 
     if (shouldRemember) {
@@ -65,50 +72,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
     setUser(null);
     setToken(null);
+    setRefreshToken(null);
     setLastLogin(0);
     setRememberMe(false);
 
     // Clear from both storages
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('user');
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('lastLogin');
     localStorage.removeItem('rememberMe');
 
     sessionStorage.removeItem('isAuthenticated');
     sessionStorage.removeItem('user');
-    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
     sessionStorage.removeItem('lastLogin');
   };
 
   useEffect(() => {
-    if (isAuthenticated && !token) {
+    if (isAuthenticated && (!token || !refreshToken)) {
       logout();
     }
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token, refreshToken]);
 
   useEffect(() => {
     const checkTokenRefresh = async () => {
-      if (!isAuthenticated || !token || !lastLogin) return;
+      if (!isAuthenticated || !token || !refreshToken || !lastLogin) return;
 
       const now = Date.now();
-      const timeSinceLogin = now - lastLogin;
+      const secondsSinceLogin = Math.floor((now - lastLogin) / 1000);
 
-      // Refresh token BEFORE it expires (at 2.5 hours instead of after 3 hours)
-      if (timeSinceLogin > REFRESH_THRESHOLD) {
+      // Check if refreshToken has expired (7 days)
+      if (secondsSinceLogin > REFRESH_TOKEN_EXPIRATION) {
+        console.log('Refresh token expired (7 days). Logging out...');
+        logout();
+        return;
+      }
+
+      // Refresh accessToken BEFORE it expires (30 min before 3 hours = 2.5 hours)
+      if (secondsSinceLogin > ACCESS_TOKEN_EXPIRATION - REFRESH_THRESHOLD) {
         try {
-          console.log('Refreshing token before expiration...');
-          const response = await AuthRepository.refreshToken(token);
-          const newToken = response.token;
+          console.log('Refreshing access token before expiration...');
+          const response = await AuthRepository.refreshToken(refreshToken);
+          const newAccessToken = response.accessToken;
 
-          setToken(newToken);
+          setToken(newAccessToken);
           setLastLogin(now);
 
           const storage = rememberMe ? localStorage : sessionStorage;
-          storage.setItem('authToken', newToken);
+          storage.setItem('accessToken', newAccessToken);
           storage.setItem('lastLogin', now.toString());
 
-          console.log('Token refreshed successfully');
+          console.log('Access token refreshed successfully');
         } catch (error) {
           console.error('Failed to refresh token:', error);
           logout();
@@ -121,7 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const intervalId = setInterval(checkTokenRefresh, REFRESH_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [isAuthenticated, token, lastLogin, rememberMe]);
+  }, [isAuthenticated, token, refreshToken, lastLogin, rememberMe]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout }}>

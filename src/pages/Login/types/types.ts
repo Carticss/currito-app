@@ -16,9 +16,10 @@ export interface User {
 
 export interface LoginResponse {
     user: User;
-    token: string;
+    accessToken: string;
+    refreshToken: string;
 }
 
 export interface RefreshTokenResponse {
-    token: string;
+    accessToken: string;
 }

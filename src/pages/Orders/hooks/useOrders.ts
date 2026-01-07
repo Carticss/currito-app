@@ -7,7 +7,6 @@ export const useOrders = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Filters
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [dateFilter, setDateFilter] = useState<string>('Todos');
@@ -15,26 +14,35 @@ export const useOrders = () => {
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [showCalendar, setShowCalendar] = useState(false);
 
-    useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                setLoading(true);
-                const data = await OrdersRepository.getOrders();
-                setOrders(data);
-                setError(null);
-            } catch (err) {
-                console.error('Error fetching orders:', err);
-                setError('Failed to fetch orders');
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchOrders = async (silent: boolean = false) => {
+        try {
+            if (!silent) setLoading(true);
+            const data = await OrdersRepository.getOrders();
+            setOrders(data);
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching orders:', err);
+            setError('Failed to fetch orders');
+        } finally {
+            if (!silent) setLoading(false);
+        }
+    };
 
-        fetchOrders();
+    useEffect(() => {
+        fetchOrders(false);
+    }, []);
+
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+                fetchOrders(true);
+            }
+        }, 10000);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     const filteredOrders = orders.filter(order => {
-        // Search Filter
         const query = searchQuery.toLowerCase();
         const matchesSearch = (
             order.endUserId.name.toLowerCase().includes(query) ||
@@ -42,10 +50,8 @@ export const useOrders = () => {
             order.endUserId.whatsappNumber.includes(query)
         );
 
-        // Status Filter
         const matchesStatus = statusFilter ? order.status === statusFilter : true;
 
-        // Date Filter
         let matchesDate = true;
         const orderDate = new Date(order.createdAt);
         const today = new Date();
@@ -53,7 +59,6 @@ export const useOrders = () => {
         if (dateFilter !== 'Todos') {
             if (dateFilter === 'Personalizado') {
                 if (customDateRange.start && customDateRange.end) {
-                    // Set end date to end of day
                     const end = new Date(customDateRange.end);
                     end.setHours(23, 59, 59, 999);
                     matchesDate = orderDate >= customDateRange.start && orderDate <= end;
@@ -69,7 +74,7 @@ export const useOrders = () => {
 
                 const startDate = new Date();
                 startDate.setDate(today.getDate() - daysToSubtract);
-                startDate.setHours(0, 0, 0, 0); // Start of that day
+                startDate.setHours(0, 0, 0, 0);
 
                 if (dateFilter === 'Hoy') {
                     matchesDate = orderDate >= startDate;
@@ -104,18 +109,7 @@ export const useOrders = () => {
         showCalendar,
         setShowCalendar,
         updateOrderInList,
-        refreshOrders: async () => {
-            try {
-                setLoading(true);
-                const data = await OrdersRepository.getOrders();
-                setOrders(data);
-                setError(null);
-            } catch (err) {
-                console.error('Error fetching orders:', err);
-                setError('Failed to fetch orders');
-            } finally {
-                setLoading(false);
-            }
-        }
+        // Expose manual refresh that shows loading state
+        refreshOrders: async () => fetchOrders(false)
     };
 };
