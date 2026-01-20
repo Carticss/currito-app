@@ -1,5 +1,6 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import type { Product } from '../../types/types';
+import { ImageGalleryModal } from '../ImageGalleryModal/ImageGalleryModal';
 import './ProductTableRow.css';
 
 interface ProductTableRowProps {
@@ -27,6 +28,7 @@ export const ProductTableRow = ({
 }: ProductTableRowProps) => {
     const tagsBubbleRef = useRef<HTMLDivElement>(null);
     const tagsContainerRef = useRef<HTMLDivElement>(null);
+    const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -48,11 +50,57 @@ export const ProductTableRow = ({
         };
     }, [expandedTagsProductId, product._id, onCollapseTags]);
 
+    const imagesToDisplay = useMemo(() => {
+        // Use photoUrls if available, otherwise fall back to photoUrl
+        const urls = product.photoUrls && product.photoUrls.length > 0 
+            ? product.photoUrls 
+            : (product.photoUrl ? [product.photoUrl] : []);
+        
+        return urls;
+    }, [product.photoUrls, product.photoUrl]);
+
     return (
+        <>
         <tr>
             <td>
                 <div className="product-cell">
-                    <img src={product.photoUrl} alt={product.name} className="product-image" />
+                    <div className="product-images-container">
+                        {imagesToDisplay.length === 0 ? (
+                            <div className="product-image-placeholder">
+                                <span>No imagen</span>
+                            </div>
+                        ) : imagesToDisplay.length === 1 ? (
+                            <img 
+                                src={imagesToDisplay[0]} 
+                                alt={product.name} 
+                                className="product-image"
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => setIsGalleryOpen(true)}
+                            />
+                        ) : (
+                            <>
+                                {imagesToDisplay.slice(0, 2).map((imageUrl, idx) => (
+                                    <img 
+                                        key={idx} 
+                                        src={imageUrl} 
+                                        alt={`${product.name} ${idx + 1}`} 
+                                        className="product-image"
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={() => setIsGalleryOpen(true)}
+                                    />
+                                ))}
+                                {imagesToDisplay.length > 2 && (
+                                    <div 
+                                        className="product-image-overflow"
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={() => setIsGalleryOpen(true)}
+                                    >
+                                        +{imagesToDisplay.length - 2}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
                     <span className="product-name">{product.name}</span>
                 </div>
             </td>
@@ -123,5 +171,13 @@ export const ProductTableRow = ({
                 </button>
             </td>
         </tr>
+
+        <ImageGalleryModal
+            isOpen={isGalleryOpen}
+            images={imagesToDisplay}
+            productName={product.name}
+            onClose={() => setIsGalleryOpen(false)}
+        />
+    </>
     );
 };

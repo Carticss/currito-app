@@ -1,0 +1,237 @@
+.image-gallery-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.image-gallery-modal-content {
+    background-color: #111827;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.image-gallery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #374151;
+}
+
+.image-gallery-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #f3f4f6;
+}
+
+.gallery-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    border-radius: 6px;
+}
+
+.gallery-close-btn:hover {
+    color: #f3f4f6;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.image-gallery-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px 24px;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.gallery-nav-btn {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #f3f4f6;
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.gallery-nav-btn:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.gallery-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.gallery-image-container {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    max-height: 500px;
+}
+
+.gallery-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    animation: imageLoad 0.3s ease;
+}
+
+@keyframes imageLoad {
+    from {
+        opacity: 0.8;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.gallery-image-counter {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #f3f4f6;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.gallery-thumbnails {
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #374151;
+    overflow-x: auto;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.gallery-thumbnail {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    border: 2px solid #374151;
+    background: none;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.gallery-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gallery-thumbnail:hover {
+    border-color: #6b7280;
+    transform: scale(1.05);
+}
+
+.gallery-thumbnail.active {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.gallery-keyboard-hint {
+    padding: 12px 24px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-top: 1px solid #374151;
+    text-align: center;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+@media (max-width: 768px) {
+    .image-gallery-modal-content {
+        max-width: 95%;
+        max-height: 95vh;
+    }
+
+    .image-gallery-main {
+        gap: 12px;
+        padding: 20px 12px;
+    }
+
+    .gallery-nav-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .gallery-image-container {
+        min-height: 250px;
+        max-height: 400px;
+    }
+
+    .gallery-thumbnails {
+        gap: 8px;
+        padding: 12px;
+    }
+
+    .gallery-thumbnail {
+        width: 60px;
+        height: 60px;
+    }
+}

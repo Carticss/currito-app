@@ -46,6 +46,29 @@ export const InventoryRepository = {
         return response.data;
     },
 
+    uploadProductImages: async (productId: string, files: File[]): Promise<{ imageUrls: string[] }> => {
+        const formData = new FormData();
+        files.forEach((file) => {
+            formData.append('images', file);
+        });
+        const response = await axiosInstance.post<{ imageUrls: string[] }>(`/api/v1/products/${productId}/image`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
+
+    deleteProductImage: async (productId: string, imageUrl: string): Promise<{ product: Product }> => {
+        const response = await axiosInstance.delete<{ product: Product }>(`/api/v1/products/${productId}/image`, {
+            data: { imageUrl },
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        return response.data;
+    },
+
     getCategories: async (): Promise<Category[]> => {
         const response = await axiosInstance.get<CategoryResponse>('/api/v1/catalog/categories');
         return response.data.categories;

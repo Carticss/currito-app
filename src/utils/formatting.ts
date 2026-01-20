@@ -15,6 +15,8 @@ export const getStatusLabel = (status: string) => {
         case 'cancelled': return 'Cancelado';
         case 'pending_payment_confirmation': return 'Pendiente confirmación pago';
         case 'pending_order_confirmation': return 'Pendiente confirmación pedido';
+        case 'pending_cod_delivery_info': return 'Pendiente información de entrega';
+        case 'cod_confirmed': return 'Pago Contra Entrega confirmado';
         default: return status;
     }
 };
@@ -33,6 +35,10 @@ export const getStatusColor = (status: string) => {
             return { bg: '#fff3cd', text: '#856404', border: '#ffeeba' }; // Warning-like
         case 'pending_order_confirmation':
             return { bg: '#e2e3e5', text: '#383d41', border: '#d6d8db' }; // Secondary/Neutral
+        case 'pending_cod_delivery_info':
+            return { bg: '#fff3cd', text: '#856404', border: '#ffeeba' }; // Warning - pending info
+        case 'cod_confirmed':
+            return { bg: '#d4edda', text: '#155724', border: '#c3e6cb' }; // Success - confirmed
         default:
             return { bg: '#f8f9fa', text: '#212529', border: '#dae0e5' };
     }

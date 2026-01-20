@@ -35,6 +35,7 @@ export interface Product {
     sku: string;
     priceInCents: number;
     photoUrl: string;
+    photoUrls?: string[];
     available: boolean;
     categoryId: Category | null;
     brandId: Brand | null;

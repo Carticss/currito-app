@@ -55,7 +55,6 @@ export const InventoryPage = () => {
         <div className="inventory-container">
             <header className="inventory-header">
                 <div className="header-actions">
-                    <button className="btn-secondary">Importar Archivo</button>
                     <button className="btn-primary" onClick={() => { setSelectedProduct(null); setIsModalOpen(true); }}>Nuevo producto</button>
                 </div>
             </header>

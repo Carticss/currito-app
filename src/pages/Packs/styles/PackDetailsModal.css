@@ -1,0 +1,221 @@
+/* Pack Details Modal Styles */
+.pack-details-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.pack-details-modal {
+    background-color: white;
+    border-radius: 12px;
+    width: 500px;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.pack-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.pack-details-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.pack-details-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.pack-details-close:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+.pack-details-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.pack-details-image-section {
+    margin-bottom: 1.5rem;
+}
+
+.pack-details-images {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.pack-details-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.pack-details-no-image {
+    width: 100%;
+    height: 120px;
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+}
+
+.pack-details-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.pack-details-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.pack-details-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.pack-details-value {
+    font-size: 0.9375rem;
+    color: #111827;
+}
+
+.pack-details-description {
+    padding: 0.75rem;
+    background-color: #f9fafb;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.pack-details-products-section {
+    margin-top: 1rem;
+}
+
+.pack-details-products-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.75rem;
+}
+
+.pack-details-products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pack-details-product-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.625rem 0.75rem;
+    background-color: #f9fafb;
+    border-radius: 6px;
+}
+
+.pack-details-product-name {
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.pack-details-product-qty {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+    padding: 0.25rem 0.5rem;
+    background-color: white;
+    border-radius: 4px;
+}
+
+.pack-details-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.pack-details-btn {
+    flex: 1;
+    padding: 0.625rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pack-details-btn.edit {
+    background-color: #3b82f6;
+    border: 1px solid #3b82f6;
+    color: white;
+}
+
+.pack-details-btn.edit:hover {
+    background-color: #2563eb;
+}
+
+.pack-details-btn.toggle {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+}
+
+.pack-details-btn.toggle:hover {
+    background-color: #f9fafb;
+}
+
+.pack-details-btn.toggle.loading {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .pack-details-modal {
+        width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .pack-details-overlay {
+        padding: 0;
+    }
+}

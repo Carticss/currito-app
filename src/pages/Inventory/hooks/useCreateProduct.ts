@@ -21,6 +21,10 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    const [originalImageUrls, setOriginalImageUrls] = useState<string[]>([]);
+    const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
 
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newBrandName, setNewBrandName] = useState('');
@@ -34,6 +38,8 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isCropperOpen, setIsCropperOpen] = useState(false);
     const [tempImageSrc, setTempImageSrc] = useState<string | null>(null);
+    const [isMultiCropperOpen, setIsMultiCropperOpen] = useState(false);
+    const [tempImageSources, setTempImageSources] = useState<Array<{ id: string; src: string }>>([]);
 
     useEffect(() => {
         if (productToEdit) {
@@ -46,6 +52,9 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
             setBrandId(productToEdit.brandId?._id || '');
             setSelectedTagIds(productToEdit.tags.filter(t => t !== null).map(t => t._id));
             setImagePreview(productToEdit.photoUrl || null);
+            setImagePreviews(productToEdit.photoUrls || []);
+            setOriginalImageUrls(productToEdit.photoUrls || []);
+            setDeletedImageUrls([]);
             setCreatedProductId(null);
         } else {
             setName('');
@@ -58,6 +67,10 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
             setSelectedTagIds([]);
             setImagePreview(null);
             setImageFile(null);
+            setImageFiles([]);
+            setImagePreviews([]);
+            setOriginalImageUrls([]);
+            setDeletedImageUrls([]);
             setCreatedProductId(null);
         }
     }, [productToEdit]);
@@ -174,6 +187,71 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
         }
     };
 
+    const handleFileMultipleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const files = Array.from(e.target.files);
+            const imageSources = files.map((file, index) => {
+                return new Promise<{ id: string; src: string }>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        resolve({
+                            id: `${Date.now()}-${index}`,
+                            src: reader.result as string
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+
+            Promise.all(imageSources).then((sources) => {
+                setTempImageSources(sources);
+                setIsMultiCropperOpen(true);
+            });
+        }
+    };
+
+    const handleMultipleCropComplete = (croppedImages: File[]) => {
+        setImageFiles(croppedImages);
+        
+        // Generate previews
+        const previewPromises = croppedImages.map(file => {
+            return new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    resolve(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        Promise.all(previewPromises).then((previews) => {
+            setImagePreviews(previews);
+            setIsMultiCropperOpen(false);
+            setTempImageSources([]);
+        });
+    };
+
+    const handleRemoveImage = (index: number) => {
+        const removedImageUrl = imagePreviews[index];
+        
+        // Track deleted images if they are original images (URLs not data URLs)
+        if (removedImageUrl && originalImageUrls.includes(removedImageUrl)) {
+            setDeletedImageUrls(prev => [...prev, removedImageUrl]);
+        }
+        
+        setImageFiles(prev => prev.filter((_, i) => i !== index));
+        setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleMultiCropperClose = () => {
+        setIsMultiCropperOpen(false);
+        setTempImageSources([]);
+        // Reset file input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -200,6 +278,20 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
 
             let productId: string = createdProductId || (productToEdit ? productToEdit._id : '');
 
+            // Delete removed images first if editing
+            if (productToEdit && deletedImageUrls.length > 0) {
+                try {
+                    for (const imageUrl of deletedImageUrls) {
+                        await InventoryRepository.deleteProductImage(productId, imageUrl);
+                    }
+                } catch (deleteErr) {
+                    console.error(deleteErr);
+                    setError("Error al eliminar las imágenes. Por favor, intenta de nuevo.");
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
             if (productId) {
                 const updatedProduct = await InventoryRepository.updateProduct(productId, productData);
                 productId = updatedProduct._id;
@@ -209,7 +301,16 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
                 setCreatedProductId(productId); // Store ID in case image upload fails
             }
 
-            if (imageFile) {
+            if (imageFiles.length > 0) {
+                try {
+                    await InventoryRepository.uploadProductImages(productId, imageFiles);
+                } catch (uploadErr) {
+                    console.error(uploadErr);
+                    setError("Producto guardado, pero hubo un error al subir las imágenes. Intenta guardando nuevamente.");
+                    setIsLoading(false);
+                    return; // Do NOT call onSuccess if image upload fails
+                }
+            } else if (imageFile) {
                 try {
                     await InventoryRepository.uploadProductImage(productId, imageFile);
                 } catch (uploadErr) {
@@ -241,6 +342,8 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
             selectedTagIds,
             imageFile, handleImageChange,
             imagePreview,
+            imageFiles,
+            imagePreviews,
             newCategoryName, setNewCategoryName,
             newBrandName, setNewBrandName,
             newTagName, setNewTagName,
@@ -250,7 +353,9 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
         cropperState: {
             fileInputRef,
             isCropperOpen,
-            tempImageSrc
+            tempImageSrc,
+            isMultiCropperOpen,
+            tempImageSources
         },
         auxData: {
             categories,
@@ -268,7 +373,11 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
             handleFileClick,
             handleFileChange,
             handleCropComplete,
-            handleCropperClose
+            handleCropperClose,
+            handleFileMultipleChange,
+            handleMultipleCropComplete,
+            handleRemoveImage,
+            handleMultiCropperClose
         },
         uiState: {
             isLoading,

@@ -3,7 +3,7 @@ import '../../styles/CreateProductModal.css';
 import type { Product } from '../../types/types';
 import { useCreateProduct } from '../../hooks/useCreateProduct';
 import { CustomSelect } from '../../../../components/CustomSelect/CustomSelect';
-import { ImageCropperModal } from '../ImageCropperModal/ImageCropperModal';
+import { MultiImageCropperModal } from '../MultiImageCropperModal/MultiImageCropperModal';
 
 interface CreateProductModalProps {
     isOpen: boolean;
@@ -32,11 +32,28 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, 
 
     const tagOptions = auxData.tags.map(tag => ({ value: tag._id, label: tag.name }));
 
+    const handleImageAreaClick = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.accept = 'image/*';
+        input.onchange = (e) => {
+            const event = e as any;
+            const changeEvent = {
+                target: {
+                    files: event.target.files
+                }
+            } as React.ChangeEvent<HTMLInputElement>;
+            actions.handleFileMultipleChange(changeEvent);
+        };
+        input.click();
+    };
+
     return (
         <div className="modal-overlay">
             <div className="modal-content">
                 <div className="modal-header">
-                    <h2>{productToEdit ? 'Editar Producto' : 'Nuevo Producto'}</h2> {/* Title from design, though it's "Create" logic */}
+                    <h2>{productToEdit ? 'Editar Producto' : 'Nuevo Producto'}</h2>
                     <button className="close-btn" onClick={onClose}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -49,25 +66,48 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, 
                     {uiState.error && <div className="error-message">{uiState.error}</div>}
 
                     <div className="form-group">
-                        <label>Imagen del Producto</label>
+                        <label>Imágenes del Producto</label>
                         <div className="image-upload-container">
-                            <div className="image-preview">
-                                {formState.imagePreview ? (
-                                    <img src={formState.imagePreview} alt="Preview" />
+                            <div 
+                                className={`image-upload-area ${formState.imagePreviews.length > 0 ? 'has-images' : ''}`}
+                                onClick={handleImageAreaClick}
+                            >
+                                {formState.imagePreviews.length > 0 ? (
+                                    <div className="image-gallery" onClick={(e) => e.stopPropagation()}>
+                                        {formState.imagePreviews.map((preview, idx) => (
+                                            <div key={idx} className="image-gallery-item">
+                                                <img src={preview} alt={`Preview ${idx + 1}`} />
+                                                <button
+                                                    type="button"
+                                                    className="remove-image-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        actions.handleRemoveImage(idx);
+                                                    }}
+                                                    title="Eliminar imagen"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <div className="image-gallery-item add-more" onClick={handleImageAreaClick}>
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                        </div>
+                                    </div>
                                 ) : (
-                                    <span className="image-placeholder">IMG</span>
+                                    <div className="image-placeholder-content">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                            <polyline points="21 15 16 10 5 21"></polyline>
+                                        </svg>
+                                        <span>Haz clic para subir imágenes</span>
+                                    </div>
                                 )}
                             </div>
-                            <button type="button" className="upload-btn" onClick={actions.handleFileClick}>
-                                Subir nueva imagen
-                            </button>
-                            <input
-                                type="file"
-                                ref={cropperState.fileInputRef}
-                                onChange={actions.handleFileChange}
-                                style={{ display: 'none' }}
-                                accept="image/*"
-                            />
                         </div>
                     </div>
 
@@ -194,11 +234,12 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, 
 
                     <div className="form-group">
                         <label>Etiquetas (opcional)</label>
+                        <label>Las etiquetas se crearán automaticamente a partir de las fotos proporcionadas.</label>
                         <div className="tags-list">
                             {formState.selectedTagIds.map(tagId => {
                                 const tag = auxData.tags.find(t => t._id === tagId);
                                 return tag ? (
-                                    <span key={tag._id} className="tag-chip">
+                                    <span key={tag._id + Math.random().toString(36).substr(2, 9)} className="tag-chip">
                                         {tag.name}
                                         <span className="tag-remove" onClick={() => actions.removeTag(tag._id)}>×</span>
                                     </span>
@@ -240,12 +281,16 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, 
                 </div>
             </div>
 
-            {cropperState.tempImageSrc && (
-                <ImageCropperModal
-                    isOpen={cropperState.isCropperOpen}
-                    imageSrc={cropperState.tempImageSrc}
-                    onCropComplete={actions.handleCropComplete}
-                    onClose={actions.handleCropperClose}
+            {cropperState.tempImageSources.length > 0 && (
+                <MultiImageCropperModal
+                    isOpen={cropperState.isMultiCropperOpen}
+                    images={cropperState.tempImageSources.map((item) => ({
+                        id: item.id,
+                        src: item.src,
+                        isCropped: false
+                    }))}
+                    onCropComplete={actions.handleMultipleCropComplete}
+                    onClose={actions.handleMultiCropperClose}
                 />
             )}
         </div>
