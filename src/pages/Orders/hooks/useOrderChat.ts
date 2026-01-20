@@ -17,12 +17,12 @@ export const useOrderChat = (orderId: string): UseOrderChatReturn => {
         let isMounted = true;
 
         const fetchMessages = async () => {
-            setLoading(true);
-            setError(null);
+            if (!isMounted) return;
             try {
                 const data = await MessagesRepository.getMessages(orderId);
                 if (!isMounted) return;
                 setMessages(data);
+                setError(null);
             } catch (err: any) {
                 if (!isMounted) return;
                 setError(err.response?.data?.message || 'No se pudieron cargar los mensajes.');
@@ -33,8 +33,12 @@ export const useOrderChat = (orderId: string): UseOrderChatReturn => {
 
         fetchMessages();
 
+        // Refetch messages every 10 seconds
+        const intervalId = setInterval(fetchMessages, 10000);
+
         return () => {
             isMounted = false;
+            clearInterval(intervalId);
         };
     }, [orderId]);
 
