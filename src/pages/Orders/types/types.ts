@@ -46,6 +46,13 @@ export interface OrderItem {
     updatedAt: string;
 }
 
+export interface DeliveryInfo {
+    fullName: string;
+    address: string;
+    city: string;
+    phone: string;
+}
+
 export interface Order {
     _id: string;
     organizationId: string;
@@ -54,11 +61,13 @@ export interface Order {
     orderNumber: string;
     status: string;
     totalAmountInCents: number;
+    deliveryPriceInCents?: number;
     currency: string;
     createdAt: string;
     updatedAt: string;
     __v: number;
     orderItems: OrderItem[];
+    deliveryInfo?: DeliveryInfo;
 }
 
 export interface Message {

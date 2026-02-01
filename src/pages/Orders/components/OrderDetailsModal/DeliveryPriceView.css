@@ -1,0 +1,177 @@
+.delivery-price-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.delivery-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.delivery-info-card {
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.delivery-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.delivery-label {
+    font-weight: 600;
+    color: #6b7280;
+    min-width: 80px;
+    flex-shrink: 0;
+}
+
+.delivery-value {
+    color: #1f2937;
+    word-break: break-word;
+}
+
+.price-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.price-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.price-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.price-input-group:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.currency-symbol {
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 18px;
+}
+
+.price-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 12px 0;
+    font-size: 16px;
+    color: #1f2937;
+    background-color: transparent;
+}
+
+.price-input::placeholder {
+    color: #d1d5db;
+}
+
+.price-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.order-summary {
+    background-color: #f0f9ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.summary-row.total {
+    padding-top: 12px;
+    border-top: 1px solid #bfdbfe;
+    font-weight: 600;
+}
+
+.summary-label {
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.summary-value {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.submit-btn {
+    background-color: #3b82f6;
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.submit-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.submit-btn:disabled {
+    background-color: #d1d5db;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+    .delivery-section {
+        gap: 20px;
+        padding: 16px;
+    }
+
+    .delivery-info-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .delivery-label {
+        min-width: auto;
+    }
+}

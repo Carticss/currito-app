@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
-import Cropper from 'react-easy-crop';
-import type { Area } from 'react-easy-crop';
+import React, { useState, useRef, useEffect } from 'react';
+import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import '../../styles/ImageCropperModal.css';
 
 interface ImageCropperModalProps {
@@ -10,63 +10,129 @@ interface ImageCropperModalProps {
     onClose: () => void;
 }
 
+// Helper to center the crop initially
+function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect?: number) {
+    return centerCrop(
+        makeAspectCrop(
+            {
+                unit: '%',
+                width: 50,
+            },
+            aspect || 16 / 9,
+            mediaWidth,
+            mediaHeight,
+        ),
+        mediaWidth,
+        mediaHeight,
+    );
+}
+
 export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({ isOpen, imageSrc, onCropComplete, onClose }) => {
-    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [crop, setCrop] = useState<Crop>();
+    const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
     const [zoom, setZoom] = useState(1);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+    const [baseDimensions, setBaseDimensions] = useState<{ width: number; height: number }>();
+    const imgRef = useRef<HTMLImageElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-    const onCropCompleteCallback = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-        setCroppedAreaPixels(croppedAreaPixels);
-    }, []);
+    // Reset state when opening new image
+    useEffect(() => {
+        if (isOpen) {
+            setZoom(1);
+            setCrop(undefined);
+            setCompletedCrop(undefined);
+            setBaseDimensions(undefined);
+        }
+    }, [isOpen, imageSrc]);
 
-    const createImage = (url: string): Promise<HTMLImageElement> =>
-        new Promise((resolve, reject) => {
-            const image = new Image();
-            image.addEventListener('load', () => resolve(image));
-            image.addEventListener('error', error => reject(error));
-            image.src = url;
-        });
+    function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+        const img = e.currentTarget;
+        const { naturalWidth, naturalHeight } = img;
 
-    const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<File> => {
-        const image = await createImage(imageSrc);
+        // Calculate containment within the container
+        if (containerRef.current) {
+            const { clientWidth, clientHeight } = containerRef.current;
+            // Add some padding to not touch edges exactly if desired, or 0 for full fit
+            const padding = 20;
+            const availableWidth = clientWidth - padding;
+            const availableHeight = clientHeight - padding;
+
+            const scale = Math.min(
+                availableWidth / naturalWidth,
+                availableHeight / naturalHeight
+            );
+
+            setBaseDimensions({
+                width: naturalWidth * scale,
+                height: naturalHeight * scale
+            });
+
+            // Initial crop
+            const initialCrop = centerAspectCrop(naturalWidth * scale, naturalHeight * scale, undefined);
+            setCrop(initialCrop);
+        }
+    }
+
+    const getCroppedImg = async (image: HTMLImageElement, crop: PixelCrop, fileName: string): Promise<File> => {
         const canvas = document.createElement('canvas');
+        const scaleX = image.naturalWidth / image.width;
+        const scaleY = image.naturalHeight / image.height;
         const ctx = canvas.getContext('2d');
 
         if (!ctx) {
             throw new Error('No 2d context');
         }
 
-        canvas.width = pixelCrop.width;
-        canvas.height = pixelCrop.height;
+        const pixelRatio = window.devicePixelRatio;
+        canvas.width = Math.floor(crop.width * scaleX * pixelRatio);
+        canvas.height = Math.floor(crop.height * scaleY * pixelRatio);
+
+        ctx.scale(pixelRatio, pixelRatio);
+        ctx.imageSmoothingQuality = 'high';
+
+        const cropX = crop.x * scaleX;
+        const cropY = crop.y * scaleY;
+
+        ctx.save();
+
+        // Move the crop origin to the canvas origin (0,0)
+        ctx.translate(-cropX, -cropY);
 
         ctx.drawImage(
             image,
-            pixelCrop.x,
-            pixelCrop.y,
-            pixelCrop.width,
-            pixelCrop.height,
             0,
             0,
-            pixelCrop.width,
-            pixelCrop.height
+            image.naturalWidth,
+            image.naturalHeight,
+            0,
+            0,
+            image.naturalWidth,
+            image.naturalHeight,
         );
+
+        ctx.restore();
 
         return new Promise((resolve) => {
             canvas.toBlob((blob) => {
                 if (!blob) {
-                    throw new Error('Canvas is empty');
+                    console.error('Canvas is empty');
+                    return;
                 }
-                const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
+                const file = new File([blob], fileName, { type: 'image/png' });
                 resolve(file);
-            }, 'image/jpeg', 0.95);
+            }, 'image/png');
         });
     };
 
     const handleCrop = async () => {
-        if (!croppedAreaPixels) return;
+        if (!completedCrop || !imgRef.current) return;
 
         try {
-            const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels);
+            const croppedImage = await getCroppedImg(
+                imgRef.current,
+                completedCrop,
+                'cropped-image.jpg'
+            );
             onCropComplete(croppedImage);
         } catch (e) {
             console.error('Error cropping image:', e);
@@ -88,16 +154,26 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({ isOpen, im
                     </button>
                 </div>
 
-                <div className="cropper-container">
-                    <Cropper
-                        image={imageSrc}
+                <div className="cropper-container" ref={containerRef}>
+                    <ReactCrop
                         crop={crop}
-                        zoom={zoom}
-                        aspect={1}
-                        onCropChange={setCrop}
-                        onCropComplete={onCropCompleteCallback}
-                        onZoomChange={setZoom}
-                    />
+                        onChange={(_, percentCrop) => setCrop(percentCrop)}
+                        onComplete={(c) => setCompletedCrop(c)}
+                        aspect={undefined} // Free form
+                    >
+                        <img
+                            ref={imgRef}
+                            src={imageSrc}
+                            alt="Crop me"
+                            style={{
+                                width: baseDimensions ? baseDimensions.width * zoom : '100%',
+                                height: baseDimensions ? baseDimensions.height * zoom : 'auto',
+                                maxWidth: 'none', // Ensure it can grow
+                                maxHeight: 'none'
+                            }}
+                            onLoad={onImageLoad}
+                        />
+                    </ReactCrop>
                 </div>
 
                 <div className="cropper-controls">

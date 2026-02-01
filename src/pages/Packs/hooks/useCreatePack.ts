@@ -60,7 +60,7 @@ export const useCreatePack = (onSuccess: () => void, packToEdit?: Pack | null) =
 
     // Populate form when editing
     useEffect(() => {
-        if (packToEdit) {
+        if (packToEdit && availableProducts.length > 0) {
             setName(packToEdit.name);
             setDescription(packToEdit.description || '');
             setPrice((packToEdit.priceInCents / 100).toString());
@@ -71,10 +71,21 @@ export const useCreatePack = (onSuccess: () => void, packToEdit?: Pack | null) =
 
             // Map products - we need to find product names from available products
             const mappedProducts: SelectedProduct[] = packToEdit.products.map(p => {
-                const product = availableProducts.find(ap => ap._id === p.product);
+                // Handle case where product might be populated or just an ID
+                const productId = typeof p.product === 'object' && p.product !== null
+                    ? (p.product as any)._id
+                    : p.product;
+
+                const product = availableProducts.find(ap => ap._id === productId);
+
+                // If we have the populated product in the pack, use its name as fallback
+                const fallbackName = typeof p.product === 'object' && p.product !== null
+                    ? (p.product as any).name
+                    : 'Producto desconocido';
+
                 return {
-                    productId: p.product,
-                    productName: product?.name || 'Producto desconocido',
+                    productId: productId,
+                    productName: product?.name || fallbackName,
                     quantity: p.quantity
                 };
             });
@@ -100,7 +111,7 @@ export const useCreatePack = (onSuccess: () => void, packToEdit?: Pack | null) =
 
     const handleAddProduct = () => {
         if (!selectedProductId) return;
-        
+
         const existingIndex = selectedProducts.findIndex(p => p.productId === selectedProductId);
         if (existingIndex !== -1) {
             // Update quantity if product already exists
@@ -146,7 +157,7 @@ export const useCreatePack = (onSuccess: () => void, packToEdit?: Pack | null) =
 
     const handleUpdateProductQuantity = (productId: string, quantity: number) => {
         if (quantity < 1) return;
-        setSelectedProducts(prev => prev.map(p => 
+        setSelectedProducts(prev => prev.map(p =>
             p.productId === productId ? { ...p, quantity } : p
         ));
     };
@@ -211,7 +222,7 @@ export const useCreatePack = (onSuccess: () => void, packToEdit?: Pack | null) =
 
     const handleMultiCropComplete = (croppedImages: File[]) => {
         setImageFiles(prev => [...prev, ...croppedImages]);
-        
+
         croppedImages.forEach(file => {
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -219,7 +230,7 @@ export const useCreatePack = (onSuccess: () => void, packToEdit?: Pack | null) =
             };
             reader.readAsDataURL(file);
         });
-        
+
         setIsMultiCropperOpen(false);
         setTempImageSources([]);
     };

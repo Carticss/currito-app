@@ -36,5 +36,13 @@ export const OrdersRepository = {
             ...response.data.order,
             orderItems: response.data.orderItems
         };
+    },
+
+    updateDeliveryPrice: async (orderId: string, deliveryPriceInCents: number): Promise<Order> => {
+        const response = await axiosInstance.put<{ order: Order }>(
+            `/api/v1/orders/${orderId}/delivery-price`,
+            { deliveryPriceInCents }
+        );
+        return response.data.order;
     }
 };

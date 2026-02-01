@@ -18,7 +18,9 @@ export const useOrders = () => {
         try {
             if (!silent) setLoading(true);
             const data = await OrdersRepository.getOrders();
-            setOrders(data);
+            setOrders(data.map((order: any) => ({
+                ...order,
+            })));
             setError(null);
         } catch (err) {
             console.error('Error fetching orders:', err);

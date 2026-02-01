@@ -12,7 +12,7 @@ export interface LocalOrderItem {
 }
 
 export const useOrderDetails = (
-    order: Order, 
+    order: Order,
     _onClose: () => void,
     onOrderUpdate?: (updatedOrder: Order) => void
 ) => {
@@ -20,12 +20,15 @@ export const useOrderDetails = (
     const [tabIndicatorStyle, setTabIndicatorStyle] = useState({});
     const tabsRef = useRef<HTMLDivElement>(null);
     const [isExecuting, setIsExecuting] = useState(false);
-    
+
     // Current order state - can be updated after sync
     const [currentOrder, setCurrentOrder] = useState<Order>(order);
 
+    // Delivery price state
+    const [deliveryPrice, setDeliveryPrice] = useState<string>('');
+
     // Local items state - initialized from order items
-    const [localItems, setLocalItems] = useState<LocalOrderItem[]>(() => 
+    const [localItems, setLocalItems] = useState<LocalOrderItem[]>(() =>
         order.orderItems.map(item => ({
             _id: item._id,
             productId: item.productId,
@@ -63,7 +66,7 @@ export const useOrderDetails = (
 
     const handleOpenExchangeModal = (itemId: string) => {
         // For exchange, we mark the item as deleted and open add modal
-        setLocalItems(prev => prev.map(item => 
+        setLocalItems(prev => prev.map(item =>
             item._id === itemId ? { ...item, isDeleted: true } : item
         ));
         setModalMode('add');
@@ -123,7 +126,7 @@ export const useOrderDetails = (
                 return prev.filter(i => i._id !== itemId);
             }
             // Mark existing items as deleted
-            return prev.map(i => 
+            return prev.map(i =>
                 i._id === itemId ? { ...i, isDeleted: true } : i
             );
         });
@@ -178,11 +181,11 @@ export const useOrderDetails = (
 
                 // syncOrderItems returns the updated order with orderItems
                 const updatedOrder = await OrdersRepository.syncOrderItems(currentOrder._id, allItems);
-                
+
                 // Update local state with fresh data
                 setCurrentOrder(updatedOrder);
                 resetLocalItemsFromOrder(updatedOrder);
-                
+
                 // Notify parent component
                 if (onOrderUpdate) {
                     onOrderUpdate(updatedOrder);
@@ -197,23 +200,23 @@ export const useOrderDetails = (
             // If no changes, update status based on current order status
             setIsExecuting(true);
             try {
-                let nextStatus = 'awaiting_payment';
+                let nextStatus = 'pending_delivery_info';
                 if (currentOrder.status === 'pending_order_confirmation') {
-                    nextStatus = 'awaiting_payment';
+                    nextStatus = 'pending_delivery_info';
                 } else if (currentOrder.status === 'pending_payment_confirmation') {
                     nextStatus = 'completed';
                 }
                 const updatedOrderData = await OrdersRepository.updateOrderStatus(currentOrder._id, nextStatus);
-                
+
                 // Combine updated order data with current orderItems (status change doesn't affect items)
                 const updatedOrder = {
                     ...updatedOrderData,
                     orderItems: currentOrder.orderItems
                 };
-                
+
                 // Update local state
                 setCurrentOrder(updatedOrder);
-                
+
                 // Notify parent component
                 if (onOrderUpdate) {
                     onOrderUpdate(updatedOrder);
@@ -245,6 +248,31 @@ export const useOrderDetails = (
 
     const getDeletedItems = () => localItems.filter(item => item.isDeleted && !item.isNew);
 
+    const handleDeliveryPriceSubmit = async () => {
+        if (!deliveryPrice || isNaN(parseFloat(deliveryPrice))) {
+            alert('Por favor ingresa un precio válido');
+            return;
+        }
+
+        setIsExecuting(true);
+        try {
+            const priceInCents = Math.round(parseFloat(deliveryPrice) * 100);
+            const updatedOrder = await OrdersRepository.updateDeliveryPrice(currentOrder._id, priceInCents);
+            
+            setCurrentOrder(updatedOrder);
+            setDeliveryPrice('');
+
+            if (onOrderUpdate) {
+                onOrderUpdate(updatedOrder);
+            }
+        } catch (error) {
+            console.error('Error updating delivery price:', error);
+            alert('Error al actualizar el precio de entrega. Por favor intenta nuevamente.');
+        } finally {
+            setIsExecuting(false);
+        }
+    };
+
     return {
         activeTab,
         setActiveTab,
@@ -268,6 +296,9 @@ export const useOrderDetails = (
         getConfirmButtonLabel,
         getVisibleItems,
         getDeletedItems,
-        hasChanges
+        hasChanges,
+        deliveryPrice,
+        setDeliveryPrice,
+        handleDeliveryPriceSubmit
     };
 };

@@ -4,6 +4,7 @@ import type { Product } from '../../types/types';
 import { useCreateProduct } from '../../hooks/useCreateProduct';
 import { CustomSelect } from '../../../../components/CustomSelect/CustomSelect';
 import { MultiImageCropperModal } from '../MultiImageCropperModal/MultiImageCropperModal';
+import { formatNumberDisplay } from '../../../../utils/formatting';
 
 interface CreateProductModalProps {
     isOpen: boolean;
@@ -222,12 +223,12 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, 
                         <div style={{ position: 'relative' }}>
                             <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }}>$</span>
                             <input
-                                type="number"
+                                type="text"
                                 className="form-input"
                                 style={{ paddingLeft: '25px' }}
                                 placeholder="0.00"
-                                value={formState.price}
-                                onChange={(e) => formState.setPrice(e.target.value)}
+                                value={formatNumberDisplay(formState.price)}
+                                onChange={(e) => formState.setPrice(e.target.value.replace(/[^\d.]/g, ''))}
                             />
                         </div>
                     </div>

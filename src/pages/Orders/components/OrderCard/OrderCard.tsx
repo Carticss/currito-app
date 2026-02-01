@@ -37,7 +37,9 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails }) =>
                         {getStatusLabel(order.status)}
                     </span>
                     <div className="order-amount">
-                        {formatCurrency(order.totalAmountInCents)}
+                        {order.deliveryPriceInCents !== undefined
+                            ? formatCurrency(order.totalAmountInCents + order.deliveryPriceInCents)
+                            : formatCurrency(order.totalAmountInCents)}
                     </div>
                 </div>
             </div>
@@ -46,7 +48,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails }) =>
             <div>
                 <div className="items-section-title">ARTÍCULOS DEL PEDIDO</div>
                 <div className="order-items">
-                    {order.orderItems.map((item) => (
+                    {order.orderItems?.map((item) => (
                         <div key={item._id} className="order-item-chip">
                             {item.productId.photoUrl ? (
                                 <img src={item.productId.photoUrl} alt={item.productId.name} className="item-image" />

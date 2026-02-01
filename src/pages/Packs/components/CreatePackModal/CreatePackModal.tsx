@@ -3,6 +3,7 @@ import '../../styles/CreatePackModal.css';
 import type { Pack } from '../../types/types';
 import { useCreatePack } from '../../hooks/useCreatePack';
 import { MultiImageCropperModal } from '../../../Inventory/components/MultiImageCropperModal/MultiImageCropperModal';
+import { formatNumberDisplay } from '../../../../utils/formatting';
 
 interface CreatePackModalProps {
     isOpen: boolean;
@@ -78,7 +79,7 @@ export const CreatePackModal: React.FC<CreatePackModalProps> = ({
                     <div className="form-group">
                         <label>Imágenes del Pack</label>
                         <div className="image-upload-container">
-                            <div 
+                            <div
                                 className={`image-upload-area ${formState.imagePreviews.length > 0 ? 'has-images' : ''}`}
                                 onClick={handleImageAreaClick}
                             >
@@ -147,11 +148,11 @@ export const CreatePackModal: React.FC<CreatePackModalProps> = ({
                         <div className="price-input-group">
                             <span className="currency-symbol">$</span>
                             <input
-                                type="number"
+                                type="text"
                                 className="form-input"
                                 placeholder="0"
-                                value={formState.price}
-                                onChange={(e) => formState.setPrice(e.target.value)}
+                                value={formatNumberDisplay(formState.price)}
+                                onChange={(e) => formState.setPrice(e.target.value.replace(/[^\d.]/g, ''))}
                                 min="0"
                                 step="1"
                             />
@@ -177,8 +178,8 @@ export const CreatePackModal: React.FC<CreatePackModalProps> = ({
                                                 onDragStart={(e) => handleDragStart(e, product._id)}
                                             >
                                                 {product.photoUrl || (product.photoUrls && product.photoUrls.length > 0) ? (
-                                                    <img 
-                                                        src={product.photoUrl || product.photoUrls?.[0]} 
+                                                    <img
+                                                        src={product.photoUrl || product.photoUrls?.[0]}
                                                         alt={product.name}
                                                         className="draggable-product-image"
                                                     />
@@ -201,7 +202,7 @@ export const CreatePackModal: React.FC<CreatePackModalProps> = ({
                                 </div>
                             </div>
 
-                            <div 
+                            <div
                                 className={`drop-zone ${formState.selectedProducts.length > 0 ? 'has-products' : ''}`}
                                 onDragOver={handleDragOver}
                                 onDrop={handleDrop}
@@ -214,8 +215,8 @@ export const CreatePackModal: React.FC<CreatePackModalProps> = ({
                                                     {(() => {
                                                         const fullProduct = auxData.availableProducts.find(p => p._id === product.productId);
                                                         return fullProduct?.photoUrl || (fullProduct?.photoUrls && fullProduct.photoUrls.length > 0) ? (
-                                                            <img 
-                                                                src={fullProduct.photoUrl || fullProduct.photoUrls?.[0]} 
+                                                            <img
+                                                                src={fullProduct.photoUrl || fullProduct.photoUrls?.[0]}
                                                                 alt={product.productName}
                                                                 className="selected-product-image"
                                                             />

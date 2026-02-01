@@ -3,8 +3,10 @@ import type { Order } from '../../types/types';
 import { ExtraItemModal } from '../ExtraItemModal/ExtraItemModal';
 import { useOrderDetails } from '../../hooks/useOrderDetails';
 import { DetailsView } from './DetailsView';
+import { DeliveryPriceView } from './DeliveryPriceView';
 import { ChatView } from './ChatView';
 import './OrderDetailsModal.css';
+import './DeliveryPriceView.css';
 
 interface OrderDetailsModalProps {
     order: Order;
@@ -34,7 +36,10 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
         getExistingProductIds,
         getConfirmButtonLabel,
         getVisibleItems,
-        getDeletedItems
+        getDeletedItems,
+        deliveryPrice,
+        setDeliveryPrice,
+        handleDeliveryPriceSubmit
     } = useOrderDetails(order, onClose, onOrderUpdate);
 
     return (
@@ -48,50 +53,66 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onC
                     <button className="modal-close-btn" onClick={onClose}>×</button>
                 </div>
 
-                <div className="modal-tabs" ref={tabsRef}>
-                    <button
-                        className={`tab-btn details ${activeTab === 'details' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('details')}
-                    >
-                        Detalles del Pedido
-                    </button>
-                    <button
-                        className={`tab-btn chat ${activeTab === 'chat' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('chat')}
-                    >
-                        Chat con Cliente
-                    </button>
-                    <div className="tab-indicator" style={tabIndicatorStyle} />
-                </div>
-
-                <div className="modal-content-viewport">
-                    <div className={`views-slider ${activeTab}`}>
-                        <DetailsView
+                {currentOrder.status === 'awaiting_delivery_price' ? (
+                    // Show delivery price view when order is awaiting delivery price
+                    <div className="modal-content-viewport">
+                        <DeliveryPriceView
                             order={currentOrder}
-                            visibleItems={getVisibleItems()}
-                            deletedItems={getDeletedItems()}
-                            handleOpenEditQuantityModal={handleOpenEditQuantityModal}
-                            handleOpenExchangeModal={handleOpenExchangeModal}
-                            handleDeleteItem={handleDeleteItem}
-                            handleRestoreItem={handleRestoreItem}
-                            handleOpenAddModal={handleOpenAddModal}
-                            isOrderCompleted={currentOrder.status === 'completed'}
+                            deliveryPrice={deliveryPrice}
+                            onDeliveryPriceChange={setDeliveryPrice}
+                            onDeliveryPriceSubmit={handleDeliveryPriceSubmit}
+                            isLoading={isExecuting}
                         />
-
-                        <ChatView orderId={currentOrder._id} />
                     </div>
-                </div>
+                ) : (
+                    // Show normal details/chat tabs
+                    <>
+                        <div className="modal-tabs" ref={tabsRef}>
+                            <button
+                                className={`tab-btn details ${activeTab === 'details' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('details')}
+                            >
+                                Detalles del Pedido
+                            </button>
+                            <button
+                                className={`tab-btn chat ${activeTab === 'chat' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('chat')}
+                            >
+                                Chat con Cliente
+                            </button>
+                            <div className="tab-indicator" style={tabIndicatorStyle} />
+                        </div>
 
-                {currentOrder.status !== 'completed' && (
-                    <div className="modal-footer">
-                        <button
-                            className="action-btn primary"
-                            onClick={handleConfirmOrder}
-                            disabled={isExecuting}
-                        >
-                            {getConfirmButtonLabel()}
-                        </button>
-                    </div>
+                        <div className="modal-content-viewport">
+                            <div className={`views-slider ${activeTab}`}>
+                                <DetailsView
+                                    order={currentOrder}
+                                    visibleItems={getVisibleItems()}
+                                    deletedItems={getDeletedItems()}
+                                    handleOpenEditQuantityModal={handleOpenEditQuantityModal}
+                                    handleOpenExchangeModal={handleOpenExchangeModal}
+                                    handleDeleteItem={handleDeleteItem}
+                                    handleRestoreItem={handleRestoreItem}
+                                    handleOpenAddModal={handleOpenAddModal}
+                                    isOrderCompleted={currentOrder.status === 'completed'}
+                                />
+
+                                <ChatView orderId={currentOrder._id} />
+                            </div>
+                        </div>
+
+                        {currentOrder.status !== 'completed' && (
+                            <div className="modal-footer">
+                                <button
+                                    className="action-btn primary"
+                                    onClick={handleConfirmOrder}
+                                    disabled={isExecuting}
+                                >
+                                    {getConfirmButtonLabel()}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 

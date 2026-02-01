@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
-import Cropper from 'react-easy-crop';
-import type { Area } from 'react-easy-crop';
+import React, { useState, useRef, useEffect } from 'react';
+import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import '../../styles/MultiImageCropperModal.css';
 
 interface CroppableImage {
@@ -17,6 +17,23 @@ interface MultiImageCropperModalProps {
     onClose: () => void;
 }
 
+// Helper to center the crop initially
+function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect?: number) {
+    return centerCrop(
+        makeAspectCrop(
+            {
+                unit: '%',
+                width: 50,
+            },
+            aspect || 16 / 9,
+            mediaWidth,
+            mediaHeight,
+        ),
+        mediaWidth,
+        mediaHeight,
+    );
+}
+
 export const MultiImageCropperModal: React.FC<MultiImageCropperModalProps> = ({
     isOpen,
     images,
@@ -24,65 +41,116 @@ export const MultiImageCropperModal: React.FC<MultiImageCropperModalProps> = ({
     onClose,
 }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [crop, setCrop] = useState<Crop>();
+    const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
     const [zoom, setZoom] = useState(1);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
     const [croppedImages, setCroppedImages] = useState<Map<string, File>>(new Map());
+    const [baseDimensions, setBaseDimensions] = useState<{ width: number; height: number }>();
+
+    const imgRef = useRef<HTMLImageElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const currentImage = images[currentIndex];
 
-    const onCropCompleteCallback = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-        setCroppedAreaPixels(croppedAreaPixels);
-    }, []);
+    // Reset when switching images or opening modal
+    useEffect(() => {
+        if (isOpen) {
+            resetCropperState();
+        }
+    }, [isOpen, currentIndex, images]);
 
-    const createImage = (url: string): Promise<HTMLImageElement> =>
-        new Promise((resolve, reject) => {
-            const image = new Image();
-            image.addEventListener('load', () => resolve(image));
-            image.addEventListener('error', error => reject(error));
-            image.src = url;
-        });
+    const resetCropperState = () => {
+        setZoom(1);
+        setCrop(undefined);
+        setCompletedCrop(undefined);
+        setBaseDimensions(undefined);
+    };
 
-    const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<File> => {
-        const image = await createImage(imageSrc);
+    function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+        const img = e.currentTarget;
+        const { naturalWidth, naturalHeight } = img;
+
+        if (containerRef.current) {
+            const { clientWidth, clientHeight } = containerRef.current;
+            const padding = 20;
+            const availableWidth = clientWidth - padding;
+            const availableHeight = clientHeight - padding;
+
+            const scale = Math.min(
+                availableWidth / naturalWidth,
+                availableHeight / naturalHeight
+            );
+
+            // Ensure scale doesn't stretch small images unnecessarily if we want default "contain" behavior
+            // But usually we DO want to fit to container for better visibility
+            setBaseDimensions({
+                width: naturalWidth * scale,
+                height: naturalHeight * scale
+            });
+
+            const initialCrop = centerAspectCrop(naturalWidth * scale, naturalHeight * scale, undefined);
+            setCrop(initialCrop);
+        }
+    }
+
+    const getCroppedImg = async (image: HTMLImageElement, crop: PixelCrop, fileName: string): Promise<File> => {
         const canvas = document.createElement('canvas');
+        const scaleX = image.naturalWidth / image.width;
+        const scaleY = image.naturalHeight / image.height;
         const ctx = canvas.getContext('2d');
 
         if (!ctx) {
             throw new Error('No 2d context');
         }
 
-        canvas.width = pixelCrop.width;
-        canvas.height = pixelCrop.height;
+        const pixelRatio = window.devicePixelRatio;
+        canvas.width = Math.floor(crop.width * scaleX * pixelRatio);
+        canvas.height = Math.floor(crop.height * scaleY * pixelRatio);
+
+        ctx.scale(pixelRatio, pixelRatio);
+        ctx.imageSmoothingQuality = 'high';
+
+        const cropX = crop.x * scaleX;
+        const cropY = crop.y * scaleY;
+
+        ctx.save();
+        ctx.translate(-cropX, -cropY);
 
         ctx.drawImage(
             image,
-            pixelCrop.x,
-            pixelCrop.y,
-            pixelCrop.width,
-            pixelCrop.height,
             0,
             0,
-            pixelCrop.width,
-            pixelCrop.height
+            image.naturalWidth,
+            image.naturalHeight,
+            0,
+            0,
+            image.naturalWidth,
+            image.naturalHeight,
         );
+
+        ctx.restore();
 
         return new Promise((resolve) => {
             canvas.toBlob((blob) => {
                 if (!blob) {
-                    throw new Error('Canvas is empty');
+                    console.error('Canvas is empty');
+                    return;
                 }
-                const file = new File([blob], `cropped-image-${Date.now()}.jpg`, { type: 'image/jpeg' });
+                const file = new File([blob], fileName, { type: 'image/png' });
                 resolve(file);
-            }, 'image/jpeg', 0.95);
+            }, 'image/png');
         });
     };
 
     const handleCropImage = async () => {
-        if (!croppedAreaPixels || !currentImage) return;
+        if (!completedCrop || !currentImage || !imgRef.current) return;
 
         try {
-            const croppedImage = await getCroppedImg(currentImage.src, croppedAreaPixels);
+            const croppedImage = await getCroppedImg(
+                imgRef.current,
+                completedCrop,
+                `cropped-image-${Date.now()}.jpg`
+            );
             setCroppedImages(prev => new Map(prev).set(currentImage.id, croppedImage));
         } catch (e) {
             console.error('Error cropping image:', e);
@@ -90,38 +158,23 @@ export const MultiImageCropperModal: React.FC<MultiImageCropperModalProps> = ({
     };
 
     const handleSkipImage = () => {
-        // Skip this image and move to next
         moveToNextImage();
     };
 
     const moveToNextImage = () => {
         if (currentIndex < images.length - 1) {
             setCurrentIndex(currentIndex + 1);
-            resetCropperState();
         }
-    };
-
-    const resetCropperState = () => {
-        setCrop({ x: 0, y: 0 });
-        setZoom(1);
-        setCroppedAreaPixels(null);
     };
 
     const handleFinish = () => {
         const finalCroppedImages: File[] = [];
-        
-        // Add cropped images for those that were cropped
-        croppedImages.forEach(file => {
-            finalCroppedImages.push(file);
-        });
-
-        // Add uncropped images (if any were skipped)
+        croppedImages.forEach(file => finalCroppedImages.push(file));
         images.forEach(img => {
             if (!croppedImages.has(img.id) && img.croppedFile) {
                 finalCroppedImages.push(img.croppedFile);
             }
         });
-
         onCropComplete(finalCroppedImages);
     };
 
@@ -129,6 +182,15 @@ export const MultiImageCropperModal: React.FC<MultiImageCropperModalProps> = ({
 
     const progress = Math.round(((currentIndex + 1) / images.length) * 100);
     const isCroppedInSession = croppedImages.has(currentImage.id);
+
+    // Check for cached images or race conditions where onLoad might be missed or container not ready
+    useEffect(() => {
+        if (imgRef.current && imgRef.current.complete && baseDimensions === undefined) {
+            // Force a "load" event essentially
+            const fakeEvent = { currentTarget: imgRef.current } as React.SyntheticEvent<HTMLImageElement>;
+            onImageLoad(fakeEvent);
+        }
+    }, [currentIndex, isOpen, zoom]); // Check when image index changes or modal opens
 
     return (
         <div className="multi-cropper-modal-overlay">
@@ -150,19 +212,34 @@ export const MultiImageCropperModal: React.FC<MultiImageCropperModalProps> = ({
                     </div>
                 </div>
 
-                <div className="multi-cropper-container">
-                    <Cropper
-                        image={currentImage.src}
+                <div className="multi-cropper-container" ref={containerRef}>
+                    <ReactCrop
                         crop={crop}
-                        zoom={zoom}
-                        aspect={1}
-                        onCropChange={setCrop}
-                        onCropComplete={onCropCompleteCallback}
-                        onZoomChange={setZoom}
-                    />
+                        onChange={(_, percentCrop) => setCrop(percentCrop)}
+                        onComplete={(c) => setCompletedCrop(c)}
+                        aspect={undefined}
+                        style={{
+                            maxWidth: baseDimensions ? 'none' : '100%',
+                            maxHeight: baseDimensions ? 'none' : '100%'
+                        }}
+                    >
+                        <img
+                            ref={imgRef}
+                            src={currentImage.src}
+                            alt={`Preview ${currentIndex + 1}`}
+                            style={{
+                                width: baseDimensions ? baseDimensions.width * zoom : undefined,
+                                height: baseDimensions ? baseDimensions.height * zoom : undefined,
+                                maxWidth: baseDimensions ? 'none' : '100%',
+                                maxHeight: baseDimensions ? 'none' : '100%',
+                                objectFit: 'contain'
+                            }}
+                            onLoad={onImageLoad}
+                        />
+                    </ReactCrop>
                 </div>
 
-                <div className="multi-cropper-controls">
+                {/* <div className="multi-cropper-controls">
                     <label className="multi-cropper-label">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="11" cy="11" r="8"></circle>
@@ -181,15 +258,15 @@ export const MultiImageCropperModal: React.FC<MultiImageCropperModalProps> = ({
                         onChange={(e) => setZoom(Number(e.target.value))}
                         className="zoom-slider"
                     />
-                </div>
+                </div> */}
 
                 <div className="multi-cropper-modal-footer">
                     <button className="multi-cropper-btn-cancel" onClick={onClose}>
                         Cancelar
                     </button>
                     <div className="multi-cropper-btn-group">
-                        <button 
-                            className="multi-cropper-btn-skip" 
+                        <button
+                            className="multi-cropper-btn-skip"
                             onClick={handleSkipImage}
                             disabled={currentIndex === images.length - 1}
                             title={currentIndex === images.length - 1 ? "Presiona Aplicar para continuar" : "Saltar esta imagen"}
@@ -210,8 +287,8 @@ export const MultiImageCropperModal: React.FC<MultiImageCropperModalProps> = ({
                                 Finalizar
                             </button>
                         ) : (
-                            <button 
-                                className="multi-cropper-btn-next" 
+                            <button
+                                className="multi-cropper-btn-next"
                                 onClick={moveToNextImage}
                                 disabled={!isCroppedInSession}
                                 title={!isCroppedInSession ? "Corta la imagen primero" : "Ir a la siguiente imagen"}
@@ -229,7 +306,6 @@ export const MultiImageCropperModal: React.FC<MultiImageCropperModalProps> = ({
                             className={`thumbnail ${idx === currentIndex ? 'active' : ''} ${croppedImages.has(img.id) ? 'cropped' : ''}`}
                             onClick={() => {
                                 setCurrentIndex(idx);
-                                resetCropperState();
                             }}
                         >
                             <img src={img.src} alt={`Preview ${idx + 1}`} />

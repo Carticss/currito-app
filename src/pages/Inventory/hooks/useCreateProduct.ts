@@ -211,8 +211,8 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
     };
 
     const handleMultipleCropComplete = (croppedImages: File[]) => {
-        setImageFiles(croppedImages);
-        
+        setImageFiles(prev => [...prev, ...croppedImages]);
+
         // Generate previews
         const previewPromises = croppedImages.map(file => {
             return new Promise<string>((resolve) => {
@@ -225,7 +225,7 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
         });
 
         Promise.all(previewPromises).then((previews) => {
-            setImagePreviews(previews);
+            setImagePreviews(prev => [...prev, ...previews]);
             setIsMultiCropperOpen(false);
             setTempImageSources([]);
         });
@@ -233,12 +233,12 @@ export const useCreateProduct = (onSuccess: () => void, productToEdit?: Product 
 
     const handleRemoveImage = (index: number) => {
         const removedImageUrl = imagePreviews[index];
-        
+
         // Track deleted images if they are original images (URLs not data URLs)
         if (removedImageUrl && originalImageUrls.includes(removedImageUrl)) {
             setDeletedImageUrls(prev => [...prev, removedImageUrl]);
         }
-        
+
         setImageFiles(prev => prev.filter((_, i) => i !== index));
         setImagePreviews(prev => prev.filter((_, i) => i !== index));
     };
